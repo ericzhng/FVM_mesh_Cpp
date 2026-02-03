@@ -1,6 +1,7 @@
 #pragma once
 
 #include "fvm_export.hpp"
+#include "polymesh/poly_mesh.hpp"
 #include <array>
 #include <cstdint>
 #include <string>
@@ -52,13 +53,7 @@ struct MeshParams {
     double charLength = 0.1;
 };
 
-/// Physical group information
-struct PhysicalGroup {
-    int dimension;              // 1 for boundary, 2 for surface
-    int tag;                    // Gmsh tag
-    std::string name;           // Name (e.g., "inlet", "outlet", "wall")
-    std::vector<int> entities;  // Entity tags in this group
-};
+
 
 /// Complete mesh data structure for export
 struct MeshData {

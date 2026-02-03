@@ -50,8 +50,8 @@ else()
     set(HAVE_METIS FALSE)
 endif()
 
-# Create data output directory
-file(MAKE_DIRECTORY ${CMAKE_SOURCE_DIR}/data)
+# # Create data output directory
+# file(MAKE_DIRECTORY ${CMAKE_SOURCE_DIR}/data)
 
 # =============================================================================
 # Installation Configuration

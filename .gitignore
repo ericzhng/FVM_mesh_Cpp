@@ -82,3 +82,4 @@ build_test/
 build_shared/
 
 install/
+data/**
