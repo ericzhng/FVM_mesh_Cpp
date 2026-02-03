@@ -1,7 +1,7 @@
 #pragma once
 
-#include "fvm_export.hpp"
-#include "meshgen/mesh_types.hpp"
+#include "common/fvm_export.hpp"
+#include "common/fvm_types.hpp"
 #include <string>
 
 namespace fvm {

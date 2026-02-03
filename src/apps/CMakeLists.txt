@@ -28,12 +28,13 @@ target_include_directories(fvm_partitioner PRIVATE
 target_link_libraries(fvm_partitioner
     PRIVATE
         FVM::polymesh
-        FVM::meshgen
 )
 
 # =============================================================================
 # DLL Copy Commands (Windows only)
 # =============================================================================
+
+# Common DLLs for all executables
 set(FVM_EXECUTABLES fvm_meshgen fvm_partitioner)
 
 foreach(TARGET_EXE ${FVM_EXECUTABLES})
@@ -57,14 +58,8 @@ foreach(TARGET_EXE ${FVM_EXECUTABLES})
         )
     endif()
 
-    # Copy library DLLs (Windows shared builds only)
+    # Copy polymesh DLL (shared builds only)
     if(WIN32 AND BUILD_SHARED)
-        add_custom_command(TARGET ${TARGET_EXE} POST_BUILD
-            COMMAND ${CMAKE_COMMAND} -E copy_if_different
-                "$<TARGET_FILE:meshgen>"
-                "$<TARGET_FILE_DIR:${TARGET_EXE}>"
-            COMMENT "Copying meshgen DLL to ${TARGET_EXE} output directory"
-        )
         add_custom_command(TARGET ${TARGET_EXE} POST_BUILD
             COMMAND ${CMAKE_COMMAND} -E copy_if_different
                 "$<TARGET_FILE:polymesh>"
@@ -73,6 +68,16 @@ foreach(TARGET_EXE ${FVM_EXECUTABLES})
         )
     endif()
 endforeach()
+
+# fvm_meshgen also needs meshgen DLL
+if(WIN32 AND BUILD_SHARED)
+    add_custom_command(TARGET fvm_meshgen POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            "$<TARGET_FILE:meshgen>"
+            "$<TARGET_FILE_DIR:fvm_meshgen>"
+        COMMENT "Copying meshgen DLL to fvm_meshgen output directory"
+    )
+endif()
 
 # =============================================================================
 # Installation Rules

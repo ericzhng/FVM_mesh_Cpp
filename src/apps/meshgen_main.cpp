@@ -8,7 +8,7 @@
 
 #include "meshgen/geometry.hpp"
 #include "meshgen/mesh_generator.hpp"
-#include "meshgen/mesh_types.hpp"
+#include "common/fvm_types.hpp"
 #include "polymesh/vtk_writer.hpp"
 
 #include <gmsh.h>

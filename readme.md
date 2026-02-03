@@ -220,8 +220,7 @@ cpp/
 │   ├── mesh_quality.hpp           # Quality metrics
 │   ├── geometry.hpp               # Geometry creation utilities
 │   ├── mesh_generator.hpp         # Mesh generation
-│   ├── vtk_writer.hpp             # VTK export
-│   └── mesh_types.hpp             # Common type definitions
+│   └── vtk_writer.hpp             # VTK export
 ├── src/
 │   ├── poly_mesh.cpp
 │   ├── local_mesh.cpp

@@ -33,11 +33,11 @@ target_include_directories(polymesh
 )
 
 # Link dependencies
-# polymesh depends on meshgen for shared types (mesh_types.hpp)
 target_link_libraries(polymesh
     PUBLIC
-        FVM::meshgen
+        Gmsh::Gmsh
 )
+target_compile_definitions(polymesh PUBLIC GMSH_DLL)
 
 # Link METIS if available (for graph partitioning)
 if(HAVE_METIS)

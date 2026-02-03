@@ -9,7 +9,7 @@
  * numerical simulations.
  */
 
-#include "fvm_export.hpp"
+#include "common/fvm_export.hpp"
 #include <string>
 #include <vector>
 

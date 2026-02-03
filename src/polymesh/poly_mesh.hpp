@@ -8,37 +8,15 @@
  * for mesh information required for finite volume method (FVM) solvers.
  */
 
-#include "fvm_export.hpp"
-#include <array>
-#include <cstddef>
+#include "common/fvm_export.hpp"
+#include "common/fvm_types.hpp"
 #include <map>
 #include <memory>
-#include <string>
-#include <unordered_map>
-#include <vector>
 
 namespace fvm {
 
 // Forward declarations
 class MeshQuality;
-
-/**
- * @brief Properties of an element type (e.g., triangle, quad, tetrahedron).
- */
-struct ElementTypeProperties {
-    std::string name;
-    int numNodes;
-};
-
-/**
- * @brief Information about a physical group (boundary or volume region).
- */
-struct PhysicalGroup {
-    int dimension;
-    int tag;
-    std::string name;
-    std::vector<int> entities;
-};
 
 /**
  * @brief A comprehensive data structure for unstructured polygonal meshes.

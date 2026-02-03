@@ -1,38 +1,32 @@
-# Meshgen Library - Gmsh-based geometry and mesh generation
+# VTK I/O Library - VTK and OpenFOAM mesh output utilities
 
-set(MESHGEN_SOURCES
-    geometry.cpp
-    mesh_generator.cpp
+set(VTKIO_SOURCES
+    vtk_writer.cpp
 )
 
-set(MESHGEN_HEADERS
-    geometry.hpp
-    mesh_generator.hpp
+set(VTKIO_HEADERS
+    vtk_writer.hpp
 )
 
 # Create library (STATIC or SHARED based on FVM_LIBRARY_TYPE)
-add_library(meshgen ${FVM_LIBRARY_TYPE} ${MESHGEN_SOURCES} ${MESHGEN_HEADERS})
+add_library(vtkio ${FVM_LIBRARY_TYPE} ${VTKIO_SOURCES} ${VTKIO_HEADERS})
 
 # Set library properties
-target_include_directories(meshgen
+target_include_directories(vtkio
     PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/..>
         $<INSTALL_INTERFACE:include>
-    PRIVATE
-        ${Gmsh_INCLUDE_DIR}
 )
 
-# Link Gmsh (required for this library)
-target_link_libraries(meshgen PUBLIC Gmsh::Gmsh)
-target_compile_definitions(meshgen PUBLIC GMSH_DLL)
+# No external dependencies - only uses standard library and common headers
 
 # Handle export definitions for shared/static builds
 if(BUILD_SHARED)
     # Building shared library - define EXPORTS macro
-    target_compile_definitions(meshgen PRIVATE FVM_EXPORTS)
+    target_compile_definitions(vtkio PRIVATE FVM_EXPORTS)
 
     # Set shared library properties
-    set_target_properties(meshgen PROPERTIES
+    set_target_properties(vtkio PROPERTIES
         # Version information
         VERSION ${PROJECT_VERSION}
         SOVERSION ${PROJECT_VERSION_MAJOR}
@@ -45,7 +39,7 @@ if(BUILD_SHARED)
 
     # On Windows, ensure runtime library is copied to output directory
     if(WIN32)
-        set_target_properties(meshgen PROPERTIES
+        set_target_properties(vtkio PROPERTIES
             RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin
             LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib
             ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib
@@ -53,11 +47,11 @@ if(BUILD_SHARED)
     endif()
 else()
     # Building static library - define STATIC macro
-    target_compile_definitions(meshgen PUBLIC FVM_STATIC)
+    target_compile_definitions(vtkio PUBLIC FVM_STATIC)
 endif()
 
 # Set C++ standard
-target_compile_features(meshgen PUBLIC cxx_std_17)
+target_compile_features(vtkio PUBLIC cxx_std_17)
 
 # Export alias for easier usage
-add_library(FVM::meshgen ALIAS meshgen)
+add_library(FVM::vtkio ALIAS vtkio)

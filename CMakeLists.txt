@@ -73,6 +73,16 @@ set(FVM_INSTALL_CMAKEDIR ${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME})
 add_subdirectory(src)
 
 # =============================================================================
+# Testing Configuration
+# =============================================================================
+option(BUILD_TESTING "Build the testing tree" OFF)
+
+if(BUILD_TESTING)
+    enable_testing()
+    add_subdirectory(tests)
+endif()
+
+# =============================================================================
 # CPack Configuration - Installer Generation
 # =============================================================================
 set(CPACK_PACKAGE_NAME "${PROJECT_NAME}")

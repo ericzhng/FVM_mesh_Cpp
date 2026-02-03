@@ -13,7 +13,8 @@
       "Bash(xargs:*)",
       "Bash(tree:*)",
       "Bash(git mv:*)",
-      "Bash(git -C:*)"
+      "Bash(git -C:*)",
+      "Bash(ctest:*)"
     ]
   }
 }

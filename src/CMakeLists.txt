@@ -19,9 +19,10 @@ install(TARGETS meshgen polymesh
 )
 
 # Install header files
-install(FILES fvm_export.hpp
-    DESTINATION ${FVM_INSTALL_INCLUDEDIR}
+install(DIRECTORY common/
+    DESTINATION ${FVM_INSTALL_INCLUDEDIR}/common
     COMPONENT Development
+    FILES_MATCHING PATTERN "*.hpp"
 )
 install(DIRECTORY meshgen/
     DESTINATION ${FVM_INSTALL_INCLUDEDIR}/meshgen

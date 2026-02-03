@@ -17,7 +17,7 @@
  * - Random: Random permutation for testing
  */
 
-#include "fvm_export.hpp"
+#include "common/fvm_export.hpp"
 #include <memory>
 #include <string>
 #include <vector>

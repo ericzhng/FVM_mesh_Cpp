@@ -13,7 +13,7 @@
  * - Hierarchical: Coordinate bisection without external dependencies
  */
 
-#include "fvm_export.hpp"
+#include "common/fvm_export.hpp"
 #include <string>
 #include <vector>
 
