@@ -85,6 +85,8 @@ install/
 data/**
 output/**
 
-extern/yaml-cpp*
+extern/yaml-cpp-*
+extern/CLI11-*
 
 .claude/settings.local.json
+
