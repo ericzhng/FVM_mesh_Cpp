@@ -1,0 +1,39 @@
+# Simple Rectangle Mesh
+# This example creates a basic rectangular mesh with quad elements.
+
+project:
+  name: "simple_rectangle"
+  description: "Basic rectangular mesh for testing"
+
+geometries:
+  - id: rect
+    type: rectangle
+    params:
+      length: 1.0
+      width: 1.0
+      x: 0.0
+      y: 0.0
+
+mesh:
+  type: quads
+  meshSize: 0.1
+  charLength: 0.05
+
+boundaries:
+  - name: inlet
+    expr: "X == 0"
+  - name: outlet
+    expr: "X == 1.0"
+  - name: walls
+    expr: "Y == 0 || Y == 1.0"
+
+partition:
+  enabled: false
+
+output:
+  directory: output/rectangle
+  baseName: rect_mesh
+  formats:
+    - vtu
+    - msh
+  writeBoundaryInfo: true

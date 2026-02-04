@@ -1,0 +1,57 @@
+# Multiple Geometries Example
+# This example demonstrates creating a mesh with multiple shapes (union).
+
+project:
+  name: "multi_geometry"
+  description: "Mesh with multiple geometry shapes combined"
+
+geometries:
+  # Main rectangular domain
+  - id: main_domain
+    type: rectangle
+    params:
+      length: 2.0
+      width: 1.0
+      x: 0.0
+      y: 0.0
+
+  # Circular extension on the left (inlet plenum)
+  - id: inlet_plenum
+    type: circle
+    params:
+      radius: 0.3
+      x: -0.3
+      y: 0.5
+
+mesh:
+  type: triangles
+  meshSize: 0.1
+  charLength: 0.05
+
+# Expression-based boundaries
+# Note: For the circle, use distance from center
+boundaries:
+  - name: inlet
+    expr: "X^2 + (Y - 0.5)^2 <= 0.09 && X < -0.2"  # Circle boundary on left side
+  - name: outlet
+    expr: "X == 2.0"
+  - name: walls
+    expr: "(Y == 0 || Y == 1.0) && X >= 0"  # Rectangular walls
+
+partition:
+  enabled: true
+  numParts: 2
+  method: hierarchical
+
+reorder:
+  cellStrategy: spatial_x
+  nodeStrategy: spatial_x
+
+output:
+  directory: output/multi_geo
+  baseName: multi_mesh
+  formats:
+    - vtu
+    - msh
+  writeBoundaryInfo: true
+  writePartitionMetadata: true

@@ -1,0 +1,48 @@
+# Partitioned Channel Flow Mesh
+# This example creates a 2D channel mesh and partitions it for parallel CFD.
+
+project:
+  name: "channel_flow"
+  description: "2D channel mesh for parallel CFD simulation"
+
+geometries:
+  - id: channel
+    type: rectangle
+    params:
+      length: 10.0
+      width: 1.0
+      x: 0.0
+      y: 0.0
+
+mesh:
+  type: triangles
+  meshSize: 0.2
+  charLength: 0.1
+
+boundaries:
+  - name: inlet
+    expr: "X == 0"
+  - name: outlet
+    expr: "X == 10.0"
+  - name: top_wall
+    expr: "Y == 1.0"
+  - name: bottom_wall
+    expr: "Y == 0"
+
+partition:
+  enabled: true
+  numParts: 4
+  method: metis
+
+reorder:
+  cellStrategy: rcm
+  nodeStrategy: rcm
+
+output:
+  directory: output/channel
+  baseName: channel_mesh
+  formats:
+    - vtu
+    - openfoam
+  writeBoundaryInfo: true
+  writePartitionMetadata: true

@@ -1,0 +1,34 @@
+# Circular Domain Mesh
+# This example creates a circular mesh suitable for radial problems.
+
+project:
+  name: "circular_domain"
+  description: "Circular mesh for radial flow simulation"
+
+geometries:
+  - id: disk
+    type: circle
+    params:
+      radius: 1.0
+      x: 0.0
+      y: 0.0
+
+mesh:
+  type: triangles
+  meshSize: 0.15
+  charLength: 0.08
+
+# For a circle, all edges are on the outer boundary
+boundaries:
+  - name: outer_wall
+    expr: "X^2 + Y^2 >= 0.95"  # Near the radius of 1.0
+
+partition:
+  enabled: false
+
+output:
+  directory: output/circle
+  baseName: circle_mesh
+  formats:
+    - vtu
+  writeBoundaryInfo: true
