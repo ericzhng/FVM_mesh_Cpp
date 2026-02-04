@@ -13,7 +13,7 @@ target_include_directories(fvm_meshgen PRIVATE
 target_link_libraries(fvm_meshgen
     PRIVATE
         FVM::meshgen
-        FVM::polymesh
+        FVM::vtkio
 )
 
 # =============================================================================
@@ -28,6 +28,7 @@ target_include_directories(fvm_partitioner PRIVATE
 target_link_libraries(fvm_partitioner
     PRIVATE
         FVM::polymesh
+        FVM::vtkio
 )
 
 # =============================================================================
@@ -58,24 +59,34 @@ foreach(TARGET_EXE ${FVM_EXECUTABLES})
         )
     endif()
 
-    # Copy polymesh DLL (shared builds only)
+    # Copy vtkio DLL (shared builds only - needed by all apps)
     if(WIN32 AND BUILD_SHARED)
         add_custom_command(TARGET ${TARGET_EXE} POST_BUILD
             COMMAND ${CMAKE_COMMAND} -E copy_if_different
-                "$<TARGET_FILE:polymesh>"
+                "$<TARGET_FILE:vtkio>"
                 "$<TARGET_FILE_DIR:${TARGET_EXE}>"
-            COMMENT "Copying polymesh DLL to ${TARGET_EXE} output directory"
+            COMMENT "Copying vtkio DLL to ${TARGET_EXE} output directory"
         )
     endif()
 endforeach()
 
-# fvm_meshgen also needs meshgen DLL
+# fvm_meshgen needs meshgen DLL
 if(WIN32 AND BUILD_SHARED)
     add_custom_command(TARGET fvm_meshgen POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_if_different
             "$<TARGET_FILE:meshgen>"
             "$<TARGET_FILE_DIR:fvm_meshgen>"
         COMMENT "Copying meshgen DLL to fvm_meshgen output directory"
+    )
+endif()
+
+# fvm_partitioner needs polymesh DLL
+if(WIN32 AND BUILD_SHARED)
+    add_custom_command(TARGET fvm_partitioner POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            "$<TARGET_FILE:polymesh>"
+            "$<TARGET_FILE_DIR:fvm_partitioner>"
+        COMMENT "Copying polymesh DLL to fvm_partitioner output directory"
     )
 endif()
 

@@ -1,4 +1,5 @@
 # Add library subdirectories
+add_subdirectory(vtkio)
 add_subdirectory(meshgen)
 add_subdirectory(polymesh)
 
@@ -10,7 +11,7 @@ add_subdirectory(apps)
 # =============================================================================
 
 # Install libraries with proper export configuration
-install(TARGETS meshgen polymesh
+install(TARGETS meshgen polymesh vtkio
     EXPORT FVM_meshTargets
     ARCHIVE DESTINATION ${FVM_INSTALL_LIBDIR} COMPONENT Development
     LIBRARY DESTINATION ${FVM_INSTALL_LIBDIR} COMPONENT Runtime
@@ -31,6 +32,11 @@ install(DIRECTORY meshgen/
 )
 install(DIRECTORY polymesh/
     DESTINATION ${FVM_INSTALL_INCLUDEDIR}/polymesh
+    COMPONENT Development
+    FILES_MATCHING PATTERN "*.hpp"
+)
+install(DIRECTORY vtkio/
+    DESTINATION ${FVM_INSTALL_INCLUDEDIR}/vtkio
     COMPONENT Development
     FILES_MATCHING PATTERN "*.hpp"
 )

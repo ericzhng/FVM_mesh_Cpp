@@ -7,7 +7,6 @@ set(POLYMESH_SOURCES
     local_mesh.cpp
     mesh_partition_manager.cpp
     mesh_quality.cpp
-    vtk_writer.cpp
 )
 
 set(POLYMESH_HEADERS
@@ -17,7 +16,6 @@ set(POLYMESH_HEADERS
     local_mesh.hpp
     mesh_partition_manager.hpp
     mesh_quality.hpp
-    vtk_writer.hpp
 )
 
 # Create library (STATIC or SHARED based on FVM_LIBRARY_TYPE)
