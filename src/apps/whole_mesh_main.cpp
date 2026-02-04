@@ -20,6 +20,7 @@
 #include "polymesh/mesh_partition_manager.hpp"
 #include "polymesh/local_mesh.hpp"
 #include "vtkio/vtk_writer.hpp"
+#include "CLI/CLI.hpp"
 
 #include <gmsh.h>
 
@@ -37,7 +38,6 @@ namespace fs = std::filesystem;
 // Forward Declarations
 // =============================================================================
 
-void printUsage(const char *progName);
 int createGeometryFromConfig(fvm::Geometry &geom, const fvm::GeometryConfig &config, double meshSize);
 void assignBoundariesToEdges(const std::vector<fvm::BoundaryConfig> &boundaries,
                              const std::vector<int> &surfaceTags, bool verbose);
@@ -51,67 +51,49 @@ void exportMesh(const fvm::MeshData &meshData, const fvm::OutputConfig &output, 
 
 int main(int argc, char *argv[])
 {
-    // Parse command-line arguments
+    // 1. Setup the variables (Initialize defaults)
     std::string inputFile;
     std::string overrideOutputDir;
     bool validateOnly = false;
     bool showGui = false;
     bool verbose = false;
 
-    for (int i = 1; i < argc; ++i)
-    {
-        std::string arg = argv[i];
+    // 1. HEADER: The string in the constructor becomes the description at the top.
+    CLI::App app{
+        "Finite Volume Mesh Generator (v1.0)"};
 
-        if (arg == "--help" || arg == "-h")
-        {
-            printUsage(argv[0]);
-            return 0;
-        }
-        else if (arg == "--validate")
-        {
-            validateOnly = true;
-        }
-        else if (arg == "--gui")
-        {
-            showGui = true;
-        }
-        else if (arg == "--verbose" || arg == "-v")
-        {
-            verbose = true;
-        }
-        else if ((arg == "--output" || arg == "-o") && i + 1 < argc)
-        {
-            overrideOutputDir = argv[++i];
-        }
-        else if (arg[0] != '-')
-        {
-            inputFile = arg;
-        }
-        else
-        {
-            std::cerr << "Unknown option: " << arg << "\n";
-            printUsage(argv[0]);
-            return 1;
-        }
-    }
+    // 2. FOOTER: Add examples, copyright, or contact info at the bottom.
+    app.footer(
+        "\nExamples:\n"
+        "  ./solver channel.yaml\n"
+        "  ./solver channel.yaml --output ./results --verbose\n"
+        "\nCopyright (c) 2026 Eric Zhang. Distributed under MIT License.");
 
-    if (inputFile.empty())
-    {
-        std::cerr << "Error: No input file specified.\n";
-        printUsage(argv[0]);
-        return 1;
-    }
+    // 3. Define the Flags (Booleans)
+    // CLI11 automatically handles "-v" and "--verbose" mapping
+    app.add_flag("--validate", validateOnly, "Validate mesh only, do not solve");
+    app.add_flag("--gui", showGui, "Launch the Graphical User Interface");
+    app.add_flag("-v,--verbose", verbose, "Enable verbose logging");
 
-    // Check if input file exists
-    if (!fs::exists(inputFile))
-    {
-        std::cerr << "Error: Input file not found: " << inputFile << "\n";
-        return 1;
-    }
+    // 4. Define Options (Key-Value pairs)
+    app.add_option("-o,--output", overrideOutputDir, "Override the output directory");
 
-    std::cout << "FVM Unified Mesh Generator\n";
-    std::cout << "==========================\n";
-    std::cout << "Input file: " << inputFile << "\n\n";
+    // 5. Define Positional Arguments (Input File)
+    // By not adding a "-", this becomes a positional argument.
+    // ->required() replaces your manual "if (inputFile.empty())" check.
+    // ->check(CLI::ExistingFile) is a bonus: it verifies the file exists on disk!
+    app.add_option("input_file", inputFile, "Path to the input mesh file")
+        ->required()
+        ->check(CLI::ExistingFile);
+
+    // 6. Parse
+    // This macro handles "try-catch", prints errors, prints help, and exits if needed.
+    CLI11_PARSE(app, argc, argv);
+
+    // --- Your Application Logic Starts Here ---
+    std::cout << "Processing: " << inputFile << "\n";
+    if (verbose)
+        std::cout << "Verbose mode enabled.\n";
 
     try
     {
@@ -310,20 +292,6 @@ int main(int argc, char *argv[])
 // =============================================================================
 // Helper Functions
 // =============================================================================
-
-void printUsage(const char *progName)
-{
-    std::cout << "Usage: " << progName << " <input.yaml> [options]\n\n"
-              << "Options:\n"
-              << "  --output, -o <dir>    Override output directory\n"
-              << "  --validate            Validate input file only\n"
-              << "  --gui                 Show Gmsh GUI after generation\n"
-              << "  --verbose, -v         Enable verbose output\n"
-              << "  --help, -h            Show this help message\n\n"
-              << "Example:\n"
-              << "  " << progName << " channel.yaml\n"
-              << "  " << progName << " channel.yaml --output ./results --verbose\n";
-}
 
 int createGeometryFromConfig(fvm::Geometry &geom, const fvm::GeometryConfig &config, double meshSize)
 {

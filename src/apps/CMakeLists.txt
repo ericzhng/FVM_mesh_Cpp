@@ -39,6 +39,7 @@ add_executable(whole_mesh_main whole_mesh_main.cpp)
 target_include_directories(whole_mesh_main PRIVATE
     ${CMAKE_SOURCE_DIR}/src
     ${Gmsh_INCLUDE_DIR}
+    ${CLI11_INCLUDE_DIR}
 )
 
 target_link_libraries(whole_mesh_main
@@ -47,6 +48,7 @@ target_link_libraries(whole_mesh_main
         FVM::meshgen
         FVM::polymesh
         FVM::vtkio
+        CLI11::CLI11
 )
 
 # =============================================================================

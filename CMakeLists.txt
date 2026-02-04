@@ -57,11 +57,31 @@ endif()
 # Fetch yaml-cpp for YAML parsing
 # =============================================================================
 # yaml-cpp - Use extern version directly
+# Check if the directory exists first to give a clear error if missing
+if(NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/extern/yaml-cpp-0.8.0/CMakeLists.txt")
+    message(FATAL_ERROR "yaml-cpp not found in 'extern/yaml-cpp-0.8.0'. Did you clone submodules?")
+endif()
+
 message(STATUS "Using yaml-cpp from 'extern/yaml-cpp-0.8.0'")
 set(YAML_CPP_BUILD_TESTS OFF CACHE BOOL "" FORCE)
 set(YAML_CPP_BUILD_TOOLS OFF CACHE BOOL "" FORCE)
 set(YAML_CPP_BUILD_CONTRIB OFF CACHE BOOL "" FORCE)
 add_subdirectory(extern/yaml-cpp-0.8.0 EXCLUDE_FROM_ALL)
+
+# =============================================================================
+# Fetch CLI11 for input arguments parsing
+# =============================================================================
+# CLI11 - Use extern version directly
+# Check if the directory exists first to give a clear error if missing
+if(NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/extern/CLI11-2.6.1/CMakeLists.txt")
+    message(FATAL_ERROR "CLI11 not found in 'extern/CLI11-2.6.1'. Did you clone submodules?")
+endif()
+
+message(STATUS "Using CLI11 from 'extern/CLI11-2.6.1'")
+set(CLI11_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+set(CLI11_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE) # Added this one
+set(CLI11_BUILD_DOCS OFF CACHE BOOL "" FORCE)     # Added this one
+add_subdirectory(extern/CLI11-2.6.1 EXCLUDE_FROM_ALL)
 
 # =============================================================================
 # Installation Configuration

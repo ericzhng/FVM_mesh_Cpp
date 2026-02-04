@@ -23,7 +23,7 @@ target_include_directories(yaml_input
 )
 
 # Link yaml-cpp (required for YAML parsing)
-target_link_libraries(yaml_input PUBLIC yaml-cpp)
+target_link_libraries(yaml_input PUBLIC yaml-cpp::yaml-cpp)
 
 # Handle export definitions for shared/static builds
 if(BUILD_SHARED)
