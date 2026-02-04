@@ -86,3 +86,5 @@ data/**
 output/**
 
 extern/yaml-cpp*
+
+.claude/settings.local.json
