@@ -1,11 +1,14 @@
-# VTK I/O Library - VTK and OpenFOAM mesh output utilities
+# VTK I/O Library - VTK and OpenFOAM mesh I/O utilities
 
 set(VTKIO_SOURCES
     vtk_writer.cpp
+    vtk_reader.cpp
 )
 
 set(VTKIO_HEADERS
     vtk_writer.hpp
+    vtk_reader.hpp
+    cell_types.hpp
 )
 
 # Create library (STATIC or SHARED based on FVM_LIBRARY_TYPE)

@@ -19,3 +19,4 @@ enable_testing()
 
 # Add test subdirectories
 add_subdirectory(meshgen)
+add_subdirectory(vtkio)

@@ -9,6 +9,7 @@
  */
 
 #include "fvm_export.hpp"
+#include "vtkio/cell_types.hpp"  // VTK cell type definitions
 #include <array>
 #include <cstddef>
 #include <cstdint>
@@ -90,32 +91,6 @@ struct MeshParams {
     MeshType meshType = MeshType::Triangles;
     double charLength = 0.1;
 };
-
-// =============================================================================
-// VTK Cell Type Codes
-// =============================================================================
-
-/// VTK cell type codes
-namespace VTKCellType {
-    constexpr int VERTEX = 1;
-    constexpr int LINE = 3;
-    constexpr int TRIANGLE = 5;
-    constexpr int QUAD = 9;
-    constexpr int POLYGON = 7;
-    constexpr int TETRA = 10;
-    constexpr int HEXAHEDRON = 12;
-    constexpr int WEDGE = 13;
-    constexpr int PYRAMID = 14;
-}
-
-/// Map number of nodes to VTK cell type (for 2D cells)
-inline int getVTKCellType(std::size_t numNodes) {
-    switch (numNodes) {
-        case 3: return VTKCellType::TRIANGLE;
-        case 4: return VTKCellType::QUAD;
-        default: return VTKCellType::POLYGON;
-    }
-}
 
 // =============================================================================
 // Mesh Data Structure

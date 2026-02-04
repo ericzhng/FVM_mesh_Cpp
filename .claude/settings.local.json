@@ -14,7 +14,8 @@
       "Bash(tree:*)",
       "Bash(git mv:*)",
       "Bash(git -C:*)",
-      "Bash(ctest:*)"
+      "Bash(ctest:*)",
+      "Bash(cl /EHsc /std:c++17 /I src test_reader.cpp src/vtkio/vtk_reader.cpp src/vtkio/vtk_writer.cpp /Fe:test_reader.exe)"
     ]
   }
 }
