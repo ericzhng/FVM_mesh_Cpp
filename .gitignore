@@ -83,3 +83,6 @@ build_shared/
 
 install/
 data/**
+output/**
+
+extern/yaml-cpp*

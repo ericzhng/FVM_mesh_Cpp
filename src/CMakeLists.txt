@@ -1,4 +1,5 @@
 # Add library subdirectories
+add_subdirectory(input)
 add_subdirectory(vtkio)
 add_subdirectory(meshgen)
 add_subdirectory(polymesh)
@@ -10,13 +11,20 @@ add_subdirectory(apps)
 # Installation Rules
 # =============================================================================
 
-# Install libraries with proper export configuration
+# Install core libraries with export configuration
 install(TARGETS meshgen polymesh vtkio
     EXPORT FVM_meshTargets
     ARCHIVE DESTINATION ${FVM_INSTALL_LIBDIR} COMPONENT Development
     LIBRARY DESTINATION ${FVM_INSTALL_LIBDIR} COMPONENT Runtime
     RUNTIME DESTINATION ${FVM_INSTALL_BINDIR} COMPONENT Runtime  # For Windows DLLs
     INCLUDES DESTINATION ${FVM_INSTALL_INCLUDEDIR}
+)
+
+# Install yaml_input separately (not exported due to yaml-cpp dependency)
+install(TARGETS yaml_input
+    ARCHIVE DESTINATION ${FVM_INSTALL_LIBDIR} COMPONENT Development
+    LIBRARY DESTINATION ${FVM_INSTALL_LIBDIR} COMPONENT Runtime
+    RUNTIME DESTINATION ${FVM_INSTALL_BINDIR} COMPONENT Runtime
 )
 
 # Install header files

@@ -32,11 +32,29 @@ target_link_libraries(fvm_partitioner
 )
 
 # =============================================================================
+# Unified Mesh Generator Application (with YAML input)
+# =============================================================================
+add_executable(whole_mesh_main whole_mesh_main.cpp)
+
+target_include_directories(whole_mesh_main PRIVATE
+    ${CMAKE_SOURCE_DIR}/src
+    ${Gmsh_INCLUDE_DIR}
+)
+
+target_link_libraries(whole_mesh_main
+    PRIVATE
+        FVM::yaml_input
+        FVM::meshgen
+        FVM::polymesh
+        FVM::vtkio
+)
+
+# =============================================================================
 # DLL Copy Commands (Windows only)
 # =============================================================================
 
 # Common DLLs for all executables
-set(FVM_EXECUTABLES fvm_meshgen fvm_partitioner)
+set(FVM_EXECUTABLES fvm_meshgen fvm_partitioner whole_mesh_main)
 
 foreach(TARGET_EXE ${FVM_EXECUTABLES})
     # Copy Gmsh DLL
@@ -90,10 +108,26 @@ if(WIN32 AND BUILD_SHARED)
     )
 endif()
 
+# whole_mesh_main needs meshgen, polymesh, and yaml_input DLLs
+if(WIN32 AND BUILD_SHARED)
+    add_custom_command(TARGET whole_mesh_main POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            "$<TARGET_FILE:meshgen>"
+            "$<TARGET_FILE_DIR:whole_mesh_main>"
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            "$<TARGET_FILE:polymesh>"
+            "$<TARGET_FILE_DIR:whole_mesh_main>"
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            "$<TARGET_FILE:yaml_input>"
+            "$<TARGET_FILE_DIR:whole_mesh_main>"
+        COMMENT "Copying DLLs to whole_mesh_main output directory"
+    )
+endif()
+
 # =============================================================================
 # Installation Rules
 # =============================================================================
-install(TARGETS fvm_meshgen fvm_partitioner
+install(TARGETS fvm_meshgen fvm_partitioner whole_mesh_main
     RUNTIME DESTINATION ${FVM_INSTALL_BINDIR}
     COMPONENT Runtime
 )

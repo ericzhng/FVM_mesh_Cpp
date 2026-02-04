@@ -54,6 +54,16 @@ endif()
 # file(MAKE_DIRECTORY ${CMAKE_SOURCE_DIR}/data)
 
 # =============================================================================
+# Fetch yaml-cpp for YAML parsing
+# =============================================================================
+# yaml-cpp - Use extern version directly
+message(STATUS "Using yaml-cpp from 'extern/yaml-cpp-0.8.0'")
+set(YAML_CPP_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+set(YAML_CPP_BUILD_TOOLS OFF CACHE BOOL "" FORCE)
+set(YAML_CPP_BUILD_CONTRIB OFF CACHE BOOL "" FORCE)
+add_subdirectory(extern/yaml-cpp-0.8.0 EXCLUDE_FROM_ALL)
+
+# =============================================================================
 # Installation Configuration
 # =============================================================================
 include(GNUInstallDirs)
