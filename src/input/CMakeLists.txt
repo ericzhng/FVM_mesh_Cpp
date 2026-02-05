@@ -22,8 +22,8 @@ target_include_directories(yaml_input
         $<INSTALL_INTERFACE:include>
 )
 
-# Link yaml-cpp (required for YAML parsing)
-target_link_libraries(yaml_input PUBLIC yaml-cpp::yaml-cpp)
+# Link yaml-cpp (required for YAML parsing) and common definitions
+target_link_libraries(yaml_input PUBLIC yaml-cpp::yaml-cpp fvm_common)
 
 # Handle export definitions for shared/static builds
 if(BUILD_SHARED)

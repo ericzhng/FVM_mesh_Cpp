@@ -1,3 +1,18 @@
+# =============================================================================
+# Common Compile Definitions (Numeric Precision)
+# =============================================================================
+# Create an interface library to propagate compile definitions to all FVM targets
+add_library(fvm_common INTERFACE)
+add_library(FVM::common ALIAS fvm_common)
+
+if(FVM_USE_SINGLE_PRECISION)
+    target_compile_definitions(fvm_common INTERFACE FVM_USE_SINGLE_PRECISION)
+endif()
+
+if(FVM_USE_32BIT_INT)
+    target_compile_definitions(fvm_common INTERFACE FVM_USE_32BIT_INT)
+endif()
+
 # Add library subdirectories
 add_subdirectory(input)
 add_subdirectory(vtkio)
@@ -12,7 +27,7 @@ add_subdirectory(apps)
 # =============================================================================
 
 # Install core libraries with export configuration
-install(TARGETS meshgen polymesh vtkio
+install(TARGETS fvm_common meshgen polymesh vtkio
     EXPORT FVM_meshTargets
     ARCHIVE DESTINATION ${FVM_INSTALL_LIBDIR} COMPONENT Development
     LIBRARY DESTINATION ${FVM_INSTALL_LIBDIR} COMPONENT Runtime

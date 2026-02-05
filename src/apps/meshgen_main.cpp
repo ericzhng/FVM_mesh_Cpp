@@ -163,7 +163,7 @@ int main(int argc, char *argv[])
         mesher.generate(meshParams, "sample_rect_mesh.msh");
 
         // Get mesh data for export
-        const fvm::MeshData &meshData = mesher.getMeshData();
+        const fvm::MeshInfo &meshData = mesher.getMeshData();
 
         // Write to VTK format (legacy)
         fvm::VTKWriter::writeVTK(meshData, outputDir + "/sample_rect_mesh.vtk");

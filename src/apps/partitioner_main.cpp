@@ -8,6 +8,7 @@
 #include "polymesh/poly_mesh.hpp"
 #include "polymesh/mesh_partition_manager.hpp"
 #include "polymesh/local_mesh.hpp"
+#include <gmsh.h>
 
 #include <iostream>
 #include <string>
@@ -16,7 +17,7 @@
 #include <filesystem>
 
 // Forward declarations
-fvm::MeshData localMeshToMeshData(const fvm::LocalMesh &localMesh);
+fvm::MeshInfo localMeshToMeshInfo(const fvm::LocalMesh &localMesh);
 void writePartitionMetadata(const fvm::LocalMesh &localMesh, const std::string &fileName);
 
 void printLocalMeshInfo(const fvm::LocalMesh &localMesh)
@@ -77,6 +78,8 @@ int main(int argc, char *argv[])
     }
     f.close();
 
+    gmsh::initialize();
+
     try
     {
         // 1. Create a PolyMesh from the Gmsh file
@@ -122,7 +125,7 @@ int main(int argc, char *argv[])
 
             // Write VTU file for visualization
             std::string vtuFileName = baseName + ".vtu";
-            fvm::MeshData meshData = localMeshToMeshData(localMesh);
+            fvm::MeshInfo meshData = localMeshToMeshInfo(localMesh);
             fvm::VTKWriter::writeVTU(meshData, vtuFileName);
 
             // Write JSON metadata for parallel communication
@@ -133,51 +136,47 @@ int main(int argc, char *argv[])
         }
 
         std::cout << "\nDone!\n";
+        gmsh::finalize();
         return 0;
     }
     catch (const std::exception &e)
     {
         std::cerr << "Error: " << e.what() << std::endl;
+        gmsh::finalize();
         return 1;
     }
 }
 
-fvm::MeshData localMeshToMeshData(const fvm::LocalMesh &localMesh)
+fvm::MeshInfo localMeshToMeshInfo(const fvm::LocalMesh &localMesh)
 {
-    fvm::MeshData meshData;
+    fvm::MeshInfo meshInfo;
 
     // Nodes
-    meshData.nodes.resize(localMesh.nNodes);
-    meshData.nodeIds.resize(localMesh.nNodes);
+    meshInfo.nodes.resize(localMesh.nNodes);
     for (size_t i = 0; i < localMesh.nNodes; ++i)
     {
-        meshData.nodes[i] = localMesh.nodeCoords[i];
-        meshData.nodeIds[i] = localMesh.l2gNodes[i];
+        meshInfo.nodes[i] = localMesh.nodeCoords[i];
     }
 
-    // Cells
-    meshData.cells = localMesh.cellNodeConnectivity;
+    // Elements
+    meshInfo.elements = localMesh.cellNodeConnectivity;
 
-    // Cell Types
+    // Element Types
     for (int elemType : localMesh.cellElementTypes)
     {
         auto it = localMesh.elementTypeProperties.find(elemType);
         if (it != localMesh.elementTypeProperties.end())
         {
-            meshData.cellTypes.push_back(fvm::getVTKCellType(it->second.numNodes));
+            meshInfo.elementTypes.push_back(fvm::getVTKCellType(it->second.numNodes));
         }
         else
         {
             // Fallback for unknown types
-            meshData.cellTypes.push_back(fvm::VTKCellType::POLYGON);
+            meshInfo.elementTypes.push_back(fvm::VTKCellType::POLYGON);
         }
     }
 
-    // Boundary information can be tricky to reconstruct perfectly without more
-    // context from the global mesh, but we can approximate it for visualization.
-    // This implementation will be simplified.
-
-    return meshData;
+    return meshInfo;
 }
 
 void writePartitionMetadata(const fvm::LocalMesh &localMesh, const std::string &fileName)

@@ -23,7 +23,7 @@ target_include_directories(meshgen
 )
 
 # Link Gmsh (required for this library)
-target_link_libraries(meshgen PUBLIC Gmsh::Gmsh)
+target_link_libraries(meshgen PUBLIC Gmsh::Gmsh fvm_common)
 target_compile_definitions(meshgen PUBLIC GMSH_DLL)
 
 # Handle export definitions for shared/static builds

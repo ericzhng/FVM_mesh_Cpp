@@ -23,6 +23,7 @@ add_executable(fvm_partitioner partitioner_main.cpp)
 
 target_include_directories(fvm_partitioner PRIVATE
     ${CMAKE_SOURCE_DIR}/src
+    ${Gmsh_INCLUDE_DIR}
 )
 
 target_link_libraries(fvm_partitioner

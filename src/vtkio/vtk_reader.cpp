@@ -58,7 +58,7 @@ std::string VTKReader::getExtension(const std::string& filename) {
     return toLower(filename.substr(pos));
 }
 
-MeshData VTKReader::read(const std::string& filename) {
+MeshInfo VTKReader::read(const std::string& filename) {
     std::string ext = getExtension(filename);
     if (ext == ".vtk") {
         return readVTK(filename);
@@ -70,13 +70,13 @@ MeshData VTKReader::read(const std::string& filename) {
     }
 }
 
-MeshData VTKReader::readVTK(const std::string& filename) {
+MeshInfo VTKReader::readVTK(const std::string& filename) {
     std::ifstream ifs(filename);
     if (!ifs) {
         throw std::runtime_error("Failed to open file: " + filename);
     }
 
-    MeshData mesh;
+    MeshInfo mesh;
     std::string title;
     bool binary = false;
 
@@ -116,19 +116,17 @@ MeshData VTKReader::readVTK(const std::string& filename) {
             numPoints = count;
 
             mesh.nodes.reserve(count);
-            mesh.nodeIds.reserve(count);
             for (std::size_t i = 0; i < count; ++i) {
                 Point3D pt;
                 ifs >> pt[0] >> pt[1] >> pt[2];
                 mesh.nodes.push_back(pt);
-                mesh.nodeIds.push_back(i);
             }
         } else if (keyword == "cells") {
             std::size_t count, totalSize;
             iss >> count >> totalSize;
             numCells = count;
 
-            mesh.cells.reserve(count);
+            mesh.elements.reserve(count);
             for (std::size_t i = 0; i < count; ++i) {
                 std::size_t numNodes;
                 ifs >> numNodes;
@@ -136,17 +134,17 @@ MeshData VTKReader::readVTK(const std::string& filename) {
                 for (std::size_t j = 0; j < numNodes; ++j) {
                     ifs >> cell[j];
                 }
-                mesh.cells.push_back(std::move(cell));
+                mesh.elements.push_back(std::move(cell));
             }
         } else if (keyword == "cell_types") {
             std::size_t count;
             iss >> count;
 
-            mesh.cellTypes.reserve(count);
+            mesh.elementTypes.reserve(count);
             for (std::size_t i = 0; i < count; ++i) {
                 int cellType;
                 ifs >> cellType;
-                mesh.cellTypes.push_back(cellType);
+                mesh.elementTypes.push_back(cellType);
             }
         } else if (keyword == "cell_data") {
             std::size_t count;
@@ -162,7 +160,7 @@ MeshData VTKReader::readVTK(const std::string& filename) {
     ifs.close();
     std::cout << "VTK file read: " << filename << std::endl;
     std::cout << "  Nodes: " << mesh.nodes.size() << std::endl;
-    std::cout << "  Cells: " << mesh.cells.size() << std::endl;
+    std::cout << "  Elements: " << mesh.elements.size() << std::endl;
 
     return mesh;
 }
@@ -192,7 +190,7 @@ void VTKReader::parseVTKHeader(std::istream& is, std::string& title, bool& binar
     }
 }
 
-void VTKReader::parseVTKCellData(std::istream& is, MeshData& mesh, std::size_t numCells) {
+void VTKReader::parseVTKCellData(std::istream& is, MeshInfo& mesh, std::size_t numCells) {
     // Read cell data attributes (simplified - just skip for now)
     std::string line;
     while (is.good()) {
@@ -228,7 +226,7 @@ void VTKReader::parseVTKCellData(std::istream& is, MeshData& mesh, std::size_t n
     }
 }
 
-void VTKReader::parseVTKPointData(std::istream& is, MeshData& mesh, std::size_t numPoints) {
+void VTKReader::parseVTKPointData(std::istream& is, MeshInfo& mesh, std::size_t numPoints) {
     // Similar to parseVTKCellData - skip for now
     std::string line;
     while (is.good()) {
@@ -279,13 +277,13 @@ bool startsWith(const std::string& str, const std::string& prefix) {
 
 }  // namespace
 
-MeshData VTKReader::readVTU(const std::string& filename) {
+MeshInfo VTKReader::readVTU(const std::string& filename) {
     std::ifstream ifs(filename);
     if (!ifs) {
         throw std::runtime_error("Failed to open file: " + filename);
     }
 
-    MeshData mesh;
+    MeshInfo mesh;
     std::string line;
 
     // Find Piece element to get counts
@@ -308,9 +306,8 @@ MeshData VTKReader::readVTU(const std::string& filename) {
     }
 
     mesh.nodes.reserve(numPoints);
-    mesh.nodeIds.reserve(numPoints);
-    mesh.cells.reserve(numCells);
-    mesh.cellTypes.reserve(numCells);
+    mesh.elements.reserve(numCells);
+    mesh.elementTypes.reserve(numCells);
 
     // Parse data arrays
     enum class Section { None, Points, Cells };
@@ -360,7 +357,6 @@ MeshData VTKReader::readVTU(const std::string& filename) {
                     Point3D pt;
                     dataStream >> pt[0] >> pt[1] >> pt[2];
                     mesh.nodes.push_back(pt);
-                    mesh.nodeIds.push_back(i);
                 }
             } else if (currentSection == Section::Cells) {
                 if (currentArrayName == "connectivity") {
@@ -376,7 +372,7 @@ MeshData VTKReader::readVTU(const std::string& filename) {
                 } else if (currentArrayName == "types") {
                     int cellType;
                     while (dataStream >> cellType) {
-                        mesh.cellTypes.push_back(cellType);
+                        mesh.elementTypes.push_back(cellType);
                     }
                 }
             }
@@ -396,7 +392,7 @@ MeshData VTKReader::readVTU(const std::string& filename) {
             for (std::size_t j = prevOffset; j < currentOffset; ++j) {
                 cell.push_back(connectivity[j]);
             }
-            mesh.cells.push_back(std::move(cell));
+            mesh.elements.push_back(std::move(cell));
             prevOffset = currentOffset;
         }
     }
@@ -404,7 +400,7 @@ MeshData VTKReader::readVTU(const std::string& filename) {
     ifs.close();
     std::cout << "VTU file read: " << filename << std::endl;
     std::cout << "  Nodes: " << mesh.nodes.size() << std::endl;
-    std::cout << "  Cells: " << mesh.cells.size() << std::endl;
+    std::cout << "  Elements: " << mesh.elements.size() << std::endl;
 
     return mesh;
 }

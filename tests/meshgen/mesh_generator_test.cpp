@@ -103,9 +103,9 @@ namespace fvm
 
             EXPECT_NO_THROW(gen.generate(params, "tri_mesh.msh"));
 
-            const MeshData &data = gen.getMeshData();
+            const MeshInfo &data = gen.getMeshData();
             EXPECT_GT(data.nodes.size(), 0u);
-            EXPECT_GT(data.cells.size(), 0u);
+            EXPECT_GT(data.elements.size(), 0u);
         }
 
         TEST_F(MeshGeneratorTest, TriangularMeshHasCorrectCellTypes)
@@ -117,16 +117,16 @@ namespace fvm
             params[surface] = {MeshType::Triangles, 0.3};
 
             gen.generate(params, "tri_mesh.msh");
-            const MeshData &data = gen.getMeshData();
+            const MeshInfo &data = gen.getMeshData();
 
             // All cells should be triangles (VTK type 5)
-            for (int cellType : data.cellTypes)
+            for (int cellType : data.elementTypes)
             {
                 EXPECT_EQ(cellType, VTKCellType::TRIANGLE);
             }
 
             // All cells should have 3 nodes
-            for (const auto &cell : data.cells)
+            for (const auto &cell : data.elements)
             {
                 EXPECT_EQ(cell.size(), 3u);
             }
@@ -142,9 +142,9 @@ namespace fvm
 
             EXPECT_NO_THROW(gen.generate(params, "circle_tri.msh"));
 
-            const MeshData &data = gen.getMeshData();
+            const MeshInfo &data = gen.getMeshData();
             EXPECT_GT(data.nodes.size(), 0u);
-            EXPECT_GT(data.cells.size(), 0u);
+            EXPECT_GT(data.elements.size(), 0u);
         }
 
         TEST_F(MeshGeneratorTest, TriangularMeshOnTriangle)
@@ -157,7 +157,7 @@ namespace fvm
 
             EXPECT_NO_THROW(gen.generate(params, "triangle_tri.msh"));
 
-            const MeshData &data = gen.getMeshData();
+            const MeshInfo &data = gen.getMeshData();
             EXPECT_GT(data.nodes.size(), 0u);
         }
 
@@ -175,9 +175,9 @@ namespace fvm
 
             EXPECT_NO_THROW(gen.generate(params, "quad_mesh.msh"));
 
-            const MeshData &data = gen.getMeshData();
+            const MeshInfo &data = gen.getMeshData();
             EXPECT_GT(data.nodes.size(), 0u);
-            EXPECT_GT(data.cells.size(), 0u);
+            EXPECT_GT(data.elements.size(), 0u);
         }
 
         TEST_F(MeshGeneratorTest, QuadMeshHasCorrectCellTypes)
@@ -189,11 +189,11 @@ namespace fvm
             params[surface] = {MeshType::Quads, 0.3};
 
             gen.generate(params, "quad_mesh.msh");
-            const MeshData &data = gen.getMeshData();
+            const MeshInfo &data = gen.getMeshData();
 
             // Most cells should be quads (VTK type 9), some may be triangles
             int quadCount = 0;
-            for (int cellType : data.cellTypes)
+            for (int cellType : data.elementTypes)
             {
                 if (cellType == VTKCellType::QUAD)
                 {
@@ -218,9 +218,9 @@ namespace fvm
 
             EXPECT_NO_THROW(gen.generate(params, "structured_mesh.msh"));
 
-            const MeshData &data = gen.getMeshData();
+            const MeshInfo &data = gen.getMeshData();
             EXPECT_GT(data.nodes.size(), 0u);
-            EXPECT_GT(data.cells.size(), 0u);
+            EXPECT_GT(data.elements.size(), 0u);
         }
 
         TEST_F(MeshGeneratorTest, StructuredMeshHasOnlyQuads)
@@ -232,15 +232,15 @@ namespace fvm
             params[surface] = {MeshType::Structured, 0.5};
 
             gen.generate(params, "structured_mesh.msh");
-            const MeshData &data = gen.getMeshData();
+            const MeshInfo &data = gen.getMeshData();
 
             // All cells should be quads for structured mesh
-            for (int cellType : data.cellTypes)
+            for (int cellType : data.elementTypes)
             {
                 EXPECT_EQ(cellType, VTKCellType::QUAD);
             }
 
-            for (const auto &cell : data.cells)
+            for (const auto &cell : data.elements)
             {
                 EXPECT_EQ(cell.size(), 4u);
             }
@@ -271,7 +271,7 @@ namespace fvm
             params[surface] = {MeshType::Triangles, 0.3};
 
             gen.generate(params, "mesh.msh");
-            const MeshData &data = gen.getMeshData();
+            const MeshInfo &data = gen.getMeshData();
 
             // Each node should have 3 coordinates
             for (const auto &node : data.nodes)
@@ -286,7 +286,7 @@ namespace fvm
             }
         }
 
-        TEST_F(MeshGeneratorTest, NodeIdsMatchNodeCount)
+        TEST_F(MeshGeneratorTest, ElementTypesMatchElementCount)
         {
             int surface = createRectangle();
             MeshGenerator gen(surface, testOutputDir_);
@@ -295,23 +295,9 @@ namespace fvm
             params[surface] = {MeshType::Triangles, 0.3};
 
             gen.generate(params, "mesh.msh");
-            const MeshData &data = gen.getMeshData();
+            const MeshInfo &data = gen.getMeshData();
 
-            EXPECT_EQ(data.nodes.size(), data.nodeIds.size());
-        }
-
-        TEST_F(MeshGeneratorTest, CellTypesMatchCellCount)
-        {
-            int surface = createRectangle();
-            MeshGenerator gen(surface, testOutputDir_);
-
-            std::map<int, MeshParams> params;
-            params[surface] = {MeshType::Triangles, 0.3};
-
-            gen.generate(params, "mesh.msh");
-            const MeshData &data = gen.getMeshData();
-
-            EXPECT_EQ(data.cells.size(), data.cellTypes.size());
+            EXPECT_EQ(data.elements.size(), data.elementTypes.size());
         }
 
         TEST_F(MeshGeneratorTest, CellConnectivityIsValid)
@@ -323,11 +309,11 @@ namespace fvm
             params[surface] = {MeshType::Triangles, 0.3};
 
             gen.generate(params, "mesh.msh");
-            const MeshData &data = gen.getMeshData();
+            const MeshInfo &data = gen.getMeshData();
 
             // All cell node indices should be valid
             std::size_t numNodes = data.nodes.size();
-            for (const auto &cell : data.cells)
+            for (const auto &cell : data.elements)
             {
                 for (std::size_t nodeIdx : cell)
                 {
@@ -337,10 +323,10 @@ namespace fvm
         }
 
         // =============================================================================
-        // Physical Groups Tests
+        // Physical Groups / Sets Tests
         // =============================================================================
 
-        TEST_F(MeshGeneratorTest, HasBoundaryGroups)
+        TEST_F(MeshGeneratorTest, HasFaceSets)
         {
             int surface = createRectangle();
             MeshGenerator gen(surface, testOutputDir_);
@@ -349,13 +335,13 @@ namespace fvm
             params[surface] = {MeshType::Triangles, 0.3};
 
             gen.generate(params, "mesh.msh");
-            const MeshData &data = gen.getMeshData();
+            const MeshInfo &data = gen.getMeshData();
 
-            // Should have at least one boundary group
-            EXPECT_GT(data.boundaryGroups.size(), 0u);
+            // Should have at least one face set (boundary)
+            EXPECT_GT(data.faceSets.size(), 0u);
         }
 
-        TEST_F(MeshGeneratorTest, HasVolumeGroups)
+        TEST_F(MeshGeneratorTest, HasElementSets)
         {
             int surface = createRectangle();
             MeshGenerator gen(surface, testOutputDir_);
@@ -364,10 +350,10 @@ namespace fvm
             params[surface] = {MeshType::Triangles, 0.3};
 
             gen.generate(params, "mesh.msh");
-            const MeshData &data = gen.getMeshData();
+            const MeshInfo &data = gen.getMeshData();
 
-            // Should have at least one volume (surface in 2D) group
-            EXPECT_GT(data.volumeGroups.size(), 0u);
+            // Should have at least one element set (surface in 2D)
+            EXPECT_GT(data.elementSets.size(), 0u);
         }
 
         TEST_F(MeshGeneratorTest, DefaultFluidGroupCreated)
@@ -379,10 +365,10 @@ namespace fvm
             params[surface] = {MeshType::Triangles, 0.3};
 
             gen.generate(params, "mesh.msh");
-            const MeshData &data = gen.getMeshData();
+            const MeshInfo &data = gen.getMeshData();
 
             // Should have "fluid" group for untagged surfaces
-            EXPECT_TRUE(data.volumeGroups.find("fluid") != data.volumeGroups.end());
+            EXPECT_TRUE(data.elementSets.find("fluid") != data.elementSets.end());
         }
 
         TEST_F(MeshGeneratorTest, NamedBoundaryPhysicalGroups)
@@ -438,30 +424,29 @@ namespace fvm
             params[surface] = {MeshType::Triangles, 0.3};
             gen.generate(params, "named_boundaries.msh");
 
-            const MeshData &data = gen.getMeshData();
+            const MeshInfo &data = gen.getMeshData();
 
-            // Verify all four named boundary groups exist
-            EXPECT_TRUE(data.boundaryGroups.find("bottom") != data.boundaryGroups.end());
-            EXPECT_TRUE(data.boundaryGroups.find("top") != data.boundaryGroups.end());
-            EXPECT_TRUE(data.boundaryGroups.find("left") != data.boundaryGroups.end());
-            EXPECT_TRUE(data.boundaryGroups.find("right") != data.boundaryGroups.end());
+            // Verify all four named face sets exist
+            EXPECT_TRUE(data.faceSets.find("bottom") != data.faceSets.end());
+            EXPECT_TRUE(data.faceSets.find("top") != data.faceSets.end());
+            EXPECT_TRUE(data.faceSets.find("left") != data.faceSets.end());
+            EXPECT_TRUE(data.faceSets.find("right") != data.faceSets.end());
 
-            // Verify we have exactly 4 boundary groups
-            EXPECT_EQ(data.boundaryGroups.size(), 4u);
+            // Verify we have exactly 4 face sets
+            EXPECT_EQ(data.faceSets.size(), 4u);
 
-            // Verify each group has entities
-            for (const auto &[name, group] : data.boundaryGroups)
+            // Verify each face set has faces
+            for (const auto &[name, faces] : data.faceSets)
             {
-                EXPECT_GT(group.entities.size(), 0u) << "Group " << name << " has no entities";
-                EXPECT_EQ(group.dimension, 1) << "Group " << name << " should be 1D";
+                EXPECT_GT(faces.size(), 0u) << "FaceSet " << name << " has no faces";
             }
         }
 
         // =============================================================================
-        // Face Extraction Tests
+        // Face Set Tests
         // =============================================================================
 
-        TEST_F(MeshGeneratorTest, ExtractsFaces)
+        TEST_F(MeshGeneratorTest, ExtractsFaceSets)
         {
             int surface = createRectangle();
             MeshGenerator gen(surface, testOutputDir_);
@@ -470,14 +455,13 @@ namespace fvm
             params[surface] = {MeshType::Triangles, 0.3};
 
             gen.generate(params, "mesh.msh");
-            const MeshData &data = gen.getMeshData();
+            const MeshInfo &data = gen.getMeshData();
 
-            // Should have both internal and boundary faces
-            EXPECT_GT(data.internalFaces.size(), 0u);
-            EXPECT_GT(data.boundaryFaces.size(), 0u);
+            // Should have face sets (boundary groups)
+            EXPECT_GT(data.faceSets.size(), 0u);
         }
 
-        TEST_F(MeshGeneratorTest, BoundaryFacesHaveLabels)
+        TEST_F(MeshGeneratorTest, FaceSetConnectivityIsValid)
         {
             int surface = createRectangle();
             MeshGenerator gen(surface, testOutputDir_);
@@ -486,36 +470,20 @@ namespace fvm
             params[surface] = {MeshType::Triangles, 0.3};
 
             gen.generate(params, "mesh.msh");
-            const MeshData &data = gen.getMeshData();
-
-            // Each boundary face should have a label
-            EXPECT_EQ(data.boundaryFaces.size(), data.boundaryFaceLabels.size());
-        }
-
-        TEST_F(MeshGeneratorTest, FaceConnectivityIsValid)
-        {
-            int surface = createRectangle();
-            MeshGenerator gen(surface, testOutputDir_);
-
-            std::map<int, MeshParams> params;
-            params[surface] = {MeshType::Triangles, 0.3};
-
-            gen.generate(params, "mesh.msh");
-            const MeshData &data = gen.getMeshData();
+            const MeshInfo &data = gen.getMeshData();
 
             std::size_t numNodes = data.nodes.size();
 
             // All face node indices should be valid
-            for (const auto &face : data.internalFaces)
+            for (const auto &[name, faces] : data.faceSets)
             {
-                EXPECT_LT(face[0], numNodes);
-                EXPECT_LT(face[1], numNodes);
-            }
-
-            for (const auto &face : data.boundaryFaces)
-            {
-                EXPECT_LT(face[0], numNodes);
-                EXPECT_LT(face[1], numNodes);
+                for (const auto &face : faces)
+                {
+                    for (std::size_t nodeIdx : face)
+                    {
+                        EXPECT_LT(nodeIdx, numNodes);
+                    }
+                }
             }
         }
 
@@ -566,7 +534,7 @@ namespace fvm
             std::map<int, MeshParams> params1;
             params1[surface1] = {MeshType::Triangles, 0.5};
             gen1.generate(params1, "coarse.msh");
-            std::size_t coarseCells = gen1.getMeshData().cells.size();
+            std::size_t coarseElements = gen1.getMeshData().elements.size();
 
             // Reset and generate with smaller mesh size
             gmsh::clear();
@@ -578,10 +546,10 @@ namespace fvm
             std::map<int, MeshParams> params2;
             params2[surface2] = {MeshType::Triangles, 0.1};
             gen2.generate(params2, "fine.msh");
-            std::size_t fineCells = gen2.getMeshData().cells.size();
+            std::size_t fineElements = gen2.getMeshData().elements.size();
 
-            // Finer mesh should have more cells
-            EXPECT_GT(fineCells, coarseCells);
+            // Finer mesh should have more elements
+            EXPECT_GT(fineElements, coarseElements);
         }
 
         // =============================================================================
@@ -605,16 +573,16 @@ namespace fvm
 
             EXPECT_NO_THROW(gen.generate(params, "multi.msh"));
 
-            const MeshData &data = gen.getMeshData();
+            const MeshInfo &data = gen.getMeshData();
             EXPECT_GT(data.nodes.size(), 0u);
-            EXPECT_GT(data.cells.size(), 0u);
+            EXPECT_GT(data.elements.size(), 0u);
         }
 
         // =============================================================================
         // Extract Mesh Data Without Generate Tests
         // =============================================================================
 
-        TEST_F(MeshGeneratorTest, ExtractMeshDataDirectly)
+        TEST_F(MeshGeneratorTest, ExtractMeshInfoDirectly)
         {
             int surface = createRectangle();
 
@@ -622,11 +590,11 @@ namespace fvm
             gmsh::model::mesh::generate(2);
 
             MeshGenerator gen(surface, testOutputDir_);
-            EXPECT_NO_THROW(gen.extractMeshData());
+            EXPECT_NO_THROW(gen.extractMeshInfo());
 
-            const MeshData &data = gen.getMeshData();
+            const MeshInfo &data = gen.getMeshData();
             EXPECT_GT(data.nodes.size(), 0u);
-            EXPECT_GT(data.cells.size(), 0u);
+            EXPECT_GT(data.elements.size(), 0u);
         }
 
     } // namespace testing

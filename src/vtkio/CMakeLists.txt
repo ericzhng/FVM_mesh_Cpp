@@ -21,7 +21,8 @@ target_include_directories(vtkio
         $<INSTALL_INTERFACE:include>
 )
 
-# No external dependencies - only uses standard library and common headers
+# Link common definitions (numeric precision options)
+target_link_libraries(vtkio PUBLIC fvm_common)
 
 # Handle export definitions for shared/static builds
 if(BUILD_SHARED)

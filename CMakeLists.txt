@@ -14,6 +14,12 @@ option(USE_METIS "Enable METIS library for graph partitioning" ON)
 # Option to build shared libraries (DLLs on Windows, .so on Linux)
 option(BUILD_SHARED "Build shared libraries instead of static" OFF)
 
+# =============================================================================
+# Numeric Precision Options
+# =============================================================================
+option(FVM_USE_SINGLE_PRECISION "Use float instead of double for Real type" OFF)
+option(FVM_USE_32BIT_INT "Use 32-bit integers for Id/Sid instead of 64-bit" OFF)
+
 # Set library type based on BUILD_SHARED option
 if(BUILD_SHARED)
     set(FVM_LIBRARY_TYPE SHARED)
@@ -256,6 +262,18 @@ message(STATUS "Platform: ${CMAKE_SYSTEM_NAME}")
 message(STATUS "Library Type: ${FVM_LIBRARY_TYPE}")
 message(STATUS "Gmsh: ${Gmsh_LIBRARIES}")
 message(STATUS "METIS: ${HAVE_METIS}")
+message(STATUS "")
+message(STATUS "Numeric Precision:")
+if(FVM_USE_SINGLE_PRECISION)
+    message(STATUS "  Real type: float (32-bit)")
+else()
+    message(STATUS "  Real type: double (64-bit)")
+endif()
+if(FVM_USE_32BIT_INT)
+    message(STATUS "  Integer types: 32-bit")
+else()
+    message(STATUS "  Integer types: 64-bit")
+endif()
 message(STATUS "")
 message(STATUS "Libraries:")
 message(STATUS "  - meshgen (Gmsh-based geometry and mesh generation)")

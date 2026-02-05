@@ -21,7 +21,7 @@ public:
      * @param filename Output filename
      * @param binary Whether to use binary format (default: false for ASCII)
      */
-    static void writeVTK(const MeshData& mesh,
+    static void writeVTK(const MeshInfo& mesh,
                          const std::string& filename,
                          bool binary = false);
 
@@ -31,7 +31,7 @@ public:
      * @param filename Output filename
      * @param binary Whether to use binary format (default: false for ASCII)
      */
-    static void writeVTU(const MeshData& mesh,
+    static void writeVTU(const MeshInfo& mesh,
                          const std::string& filename,
                          bool binary = false);
 
@@ -40,7 +40,7 @@ public:
      * @param mesh The mesh data to write
      * @param outputDir Output directory (will create polyMesh subdirectory)
      */
-    static void writeOpenFOAM(const MeshData& mesh,
+    static void writeOpenFOAM(const MeshInfo& mesh,
                               const std::string& outputDir);
 
     /**
@@ -48,7 +48,7 @@ public:
      * @param mesh The mesh data
      * @param filename Output filename
      */
-    static void writeBoundaryInfo(const MeshData& mesh,
+    static void writeBoundaryInfo(const MeshInfo& mesh,
                                   const std::string& filename);
 
 private:
@@ -56,16 +56,16 @@ private:
     static void writeVTKHeader(std::ostream& os, const std::string& title);
 
     /// Write points section
-    static void writeVTKPoints(std::ostream& os, const MeshData& mesh);
+    static void writeVTKPoints(std::ostream& os, const MeshInfo& mesh);
 
     /// Write cells section
-    static void writeVTKCells(std::ostream& os, const MeshData& mesh);
+    static void writeVTKCells(std::ostream& os, const MeshInfo& mesh);
 
     /// Write cell types
-    static void writeVTKCellTypes(std::ostream& os, const MeshData& mesh);
+    static void writeVTKCellTypes(std::ostream& os, const MeshInfo& mesh);
 
     /// Write cell data (boundary labels, etc.)
-    static void writeVTKCellData(std::ostream& os, const MeshData& mesh);
+    static void writeVTKCellData(std::ostream& os, const MeshInfo& mesh);
 };
 
 }  // namespace fvm

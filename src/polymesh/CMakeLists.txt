@@ -34,6 +34,7 @@ target_include_directories(polymesh
 target_link_libraries(polymesh
     PUBLIC
         Gmsh::Gmsh
+        fvm_common
 )
 target_compile_definitions(polymesh PUBLIC GMSH_DLL)
 

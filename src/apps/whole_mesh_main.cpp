@@ -41,9 +41,9 @@ namespace fs = std::filesystem;
 int createGeometryFromConfig(fvm::Geometry &geom, const fvm::GeometryConfig &config, double meshSize);
 void assignBoundariesToEdges(const std::vector<fvm::BoundaryConfig> &boundaries,
                              const std::vector<int> &surfaceTags, bool verbose);
-fvm::MeshData localMeshToMeshData(const fvm::LocalMesh &localMesh);
+fvm::MeshInfo localMeshToMeshInfo(const fvm::LocalMesh &localMesh);
 void writePartitionMetadata(const fvm::LocalMesh &localMesh, const std::string &fileName);
-void exportMesh(const fvm::MeshData &meshData, const fvm::OutputConfig &output, const std::string &basePath);
+void exportMesh(const fvm::MeshInfo &meshData, const fvm::OutputConfig &output, const std::string &basePath);
 
 // =============================================================================
 // Main Function
@@ -194,14 +194,14 @@ int main(int argc, char *argv[])
 
         std::string mshFileName = config.output.baseName + ".msh";
         mesher.generate(meshParams, mshFileName);
-        std::cout << "   Mesh generated: " << mesher.getMeshData().cells.size() << " cells, "
+        std::cout << "   Mesh generated: " << mesher.getMeshData().elements.size() << " elements, "
                   << mesher.getMeshData().nodes.size() << " nodes\n";
 
         // =================================================================
         // 5. Export base mesh
         // =================================================================
         std::cout << "\n5. Exporting mesh...\n";
-        const fvm::MeshData &meshData = mesher.getMeshData();
+        const fvm::MeshInfo &meshData = mesher.getMeshData();
         std::string basePath = config.output.directory + "/" + config.output.baseName;
         exportMesh(meshData, config.output, basePath);
 
@@ -248,8 +248,8 @@ int main(int argc, char *argv[])
 
                 // Write VTU file for visualization
                 std::string vtuFile = partitionBase + ".vtu";
-                fvm::MeshData partMeshData = localMeshToMeshData(localMesh);
-                fvm::VTKWriter::writeVTU(partMeshData, vtuFile);
+                fvm::MeshInfo partMeshInfo = localMeshToMeshInfo(localMesh);
+                fvm::VTKWriter::writeVTU(partMeshInfo, vtuFile);
 
                 // Write JSON metadata for parallel communication
                 if (config.output.writePartitionMetadata)
@@ -381,37 +381,35 @@ void assignBoundariesToEdges(const std::vector<fvm::BoundaryConfig> &boundaries,
     gmsh::model::addPhysicalGroup(2, surfaceTags, -1, "domain");
 }
 
-fvm::MeshData localMeshToMeshData(const fvm::LocalMesh &localMesh)
+fvm::MeshInfo localMeshToMeshInfo(const fvm::LocalMesh &localMesh)
 {
-    fvm::MeshData meshData;
+    fvm::MeshInfo meshInfo;
 
     // Nodes
-    meshData.nodes.resize(localMesh.nNodes);
-    meshData.nodeIds.resize(localMesh.nNodes);
+    meshInfo.nodes.resize(localMesh.nNodes);
     for (std::size_t i = 0; i < localMesh.nNodes; ++i)
     {
-        meshData.nodes[i] = localMesh.nodeCoords[i];
-        meshData.nodeIds[i] = localMesh.l2gNodes[i];
+        meshInfo.nodes[i] = localMesh.nodeCoords[i];
     }
 
-    // Cells
-    meshData.cells = localMesh.cellNodeConnectivity;
+    // Elements
+    meshInfo.elements = localMesh.cellNodeConnectivity;
 
-    // Cell Types
+    // Element Types
     for (int elemType : localMesh.cellElementTypes)
     {
         auto it = localMesh.elementTypeProperties.find(elemType);
         if (it != localMesh.elementTypeProperties.end())
         {
-            meshData.cellTypes.push_back(fvm::getVTKCellType(it->second.numNodes));
+            meshInfo.elementTypes.push_back(fvm::getVTKCellType(it->second.numNodes));
         }
         else
         {
-            meshData.cellTypes.push_back(fvm::VTKCellType::POLYGON);
+            meshInfo.elementTypes.push_back(fvm::VTKCellType::POLYGON);
         }
     }
 
-    return meshData;
+    return meshInfo;
 }
 
 void writePartitionMetadata(const fvm::LocalMesh &localMesh, const std::string &fileName)
@@ -497,7 +495,7 @@ void writePartitionMetadata(const fvm::LocalMesh &localMesh, const std::string &
     ofs.close();
 }
 
-void exportMesh(const fvm::MeshData &meshData, const fvm::OutputConfig &output, const std::string &basePath)
+void exportMesh(const fvm::MeshInfo &meshData, const fvm::OutputConfig &output, const std::string &basePath)
 {
     for (const auto &format : output.formats)
     {

@@ -185,20 +185,11 @@ void PolyMesh::printSummary() const {
 // =========================================================================
 
 void PolyMesh::readGmsh(const std::string& mshFile, int gmshVerbose) {
-    gmsh::initialize();
     gmsh::option::setNumber("General.Verbosity", gmshVerbose);
-
-    try {
-        gmsh::open(mshFile);
-        readNodes();
-        readElements();
-        readPhysicalGroups();
-    } catch (...) {
-        gmsh::finalize();
-        throw;
-    }
-
-    gmsh::finalize();
+    gmsh::open(mshFile);
+    readNodes();
+    readElements();
+    readPhysicalGroups();
 }
 
 void PolyMesh::readNodes() {

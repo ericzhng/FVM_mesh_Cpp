@@ -9,7 +9,7 @@
 
 namespace fvm {
 
-void VTKWriter::writeVTK(const MeshData& mesh,
+void VTKWriter::writeVTK(const MeshInfo& mesh,
                          const std::string& filename,
                          bool binary) {
     std::ofstream ofs(filename);
@@ -46,7 +46,7 @@ void VTKWriter::writeVTK(const MeshData& mesh,
     std::cout << "VTK file written: " << filename << std::endl;
 }
 
-void VTKWriter::writeVTU(const MeshData& mesh,
+void VTKWriter::writeVTU(const MeshInfo& mesh,
                          const std::string& filename,
                          bool binary) {
     std::ofstream ofs(filename);
@@ -61,7 +61,7 @@ void VTKWriter::writeVTU(const MeshData& mesh,
     ofs << "<VTKFile type=\"UnstructuredGrid\" version=\"1.0\" byte_order=\"LittleEndian\">\n";
     ofs << "  <UnstructuredGrid>\n";
     ofs << "    <Piece NumberOfPoints=\"" << mesh.nodes.size()
-        << "\" NumberOfCells=\"" << mesh.cells.size() << "\">\n";
+        << "\" NumberOfCells=\"" << mesh.elements.size() << "\">\n";
 
     // Points
     ofs << "      <Points>\n";
@@ -77,7 +77,7 @@ void VTKWriter::writeVTU(const MeshData& mesh,
 
     // Connectivity
     ofs << "        <DataArray type=\"Int64\" Name=\"connectivity\" format=\"ascii\">\n";
-    for (const auto& cell : mesh.cells) {
+    for (const auto& cell : mesh.elements) {
         ofs << "          ";
         for (std::size_t nodeIdx : cell) {
             ofs << nodeIdx << " ";
@@ -90,7 +90,7 @@ void VTKWriter::writeVTU(const MeshData& mesh,
     ofs << "        <DataArray type=\"Int64\" Name=\"offsets\" format=\"ascii\">\n";
     std::size_t offset = 0;
     ofs << "          ";
-    for (const auto& cell : mesh.cells) {
+    for (const auto& cell : mesh.elements) {
         offset += cell.size();
         ofs << offset << " ";
     }
@@ -100,7 +100,7 @@ void VTKWriter::writeVTU(const MeshData& mesh,
     // Types
     ofs << "        <DataArray type=\"UInt8\" Name=\"types\" format=\"ascii\">\n";
     ofs << "          ";
-    for (int cellType : mesh.cellTypes) {
+    for (int cellType : mesh.elementTypes) {
         ofs << cellType << " ";
     }
     ofs << "\n";
@@ -114,7 +114,7 @@ void VTKWriter::writeVTU(const MeshData& mesh,
     // Cell IDs
     ofs << "        <DataArray type=\"Int32\" Name=\"CellID\" format=\"ascii\">\n";
     ofs << "          ";
-    for (std::size_t i = 0; i < mesh.cells.size(); ++i) {
+    for (std::size_t i = 0; i < mesh.elements.size(); ++i) {
         ofs << i << " ";
     }
     ofs << "\n";
@@ -144,7 +144,7 @@ void VTKWriter::writeVTU(const MeshData& mesh,
     std::cout << "VTU file written: " << filename << std::endl;
 }
 
-void VTKWriter::writeOpenFOAM(const MeshData& mesh,
+void VTKWriter::writeOpenFOAM(const MeshInfo& mesh,
                               const std::string& outputDir) {
     std::string polyMeshDir = outputDir + "/constant/polyMesh";
     std::filesystem::create_directories(polyMeshDir);
@@ -185,8 +185,8 @@ void VTKWriter::writeOpenFOAM(const MeshData& mesh,
     // Build face data from cells
     std::map<std::pair<std::size_t, std::size_t>, std::size_t> edgeToFaceIdx;
 
-    for (std::size_t cellIdx = 0; cellIdx < mesh.cells.size(); ++cellIdx) {
-        const auto& cell = mesh.cells[cellIdx];
+    for (std::size_t cellIdx = 0; cellIdx < mesh.elements.size(); ++cellIdx) {
+        const auto& cell = mesh.elements[cellIdx];
         std::size_t n = cell.size();
 
         for (std::size_t i = 0; i < n; ++i) {
@@ -290,13 +290,20 @@ void VTKWriter::writeOpenFOAM(const MeshData& mesh,
         std::ofstream ofs(polyMeshDir + "/boundary");
         writeFoamHeader(ofs, "polyBoundaryMesh", "boundary");
 
-        // Group boundary faces by label
+        // Use faceSets for boundary patches
+        // For now, treat all boundary faces as one patch if no faceSets defined
         std::map<std::string, std::vector<std::size_t>> boundaryPatches;
-        for (std::size_t i = 0; i < boundaryFaceIndices.size(); ++i) {
-            std::string label = (i < mesh.boundaryFaceLabels.size())
-                                ? mesh.boundaryFaceLabels[i]
-                                : "unnamed";
-            boundaryPatches[label].push_back(i);
+        if (mesh.faceSets.empty()) {
+            for (std::size_t i = 0; i < boundaryFaceIndices.size(); ++i) {
+                boundaryPatches["defaultPatch"].push_back(i);
+            }
+        } else {
+            // Use faceSet names as patch names
+            for (const auto& [name, faces] : mesh.faceSets) {
+                for (std::size_t i = 0; i < faces.size(); ++i) {
+                    boundaryPatches[name].push_back(i);
+                }
+            }
         }
 
         ofs << boundaryPatches.size() << "\n(\n";
@@ -318,7 +325,7 @@ void VTKWriter::writeOpenFOAM(const MeshData& mesh,
     std::cout << "OpenFOAM polyMesh written to: " << polyMeshDir << std::endl;
 }
 
-void VTKWriter::writeBoundaryInfo(const MeshData& mesh,
+void VTKWriter::writeBoundaryInfo(const MeshInfo& mesh,
                                   const std::string& filename) {
     std::ofstream ofs(filename);
     if (!ofs) {
@@ -326,25 +333,23 @@ void VTKWriter::writeBoundaryInfo(const MeshData& mesh,
     }
 
     ofs << "# Boundary Information\n";
-    ofs << "# Format: boundary_name num_faces entity_tags...\n\n";
+    ofs << "# Format: boundary_name num_faces\n\n";
 
-    for (const auto& [name, group] : mesh.boundaryGroups) {
-        ofs << name << " " << group.entities.size();
-        for (int tag : group.entities) {
-            ofs << " " << tag;
-        }
-        ofs << "\n";
+    for (const auto& [name, faces] : mesh.faceSets) {
+        ofs << name << " " << faces.size() << "\n";
     }
 
-    ofs << "\n# Boundary Face List\n";
-    ofs << "# Format: face_index node1 node2 boundary_name\n\n";
+    ofs << "\n# Face Sets\n";
+    ofs << "# Format: set_name face_index node_indices...\n\n";
 
-    for (std::size_t i = 0; i < mesh.boundaryFaces.size(); ++i) {
-        const auto& face = mesh.boundaryFaces[i];
-        std::string label = (i < mesh.boundaryFaceLabels.size())
-                           ? mesh.boundaryFaceLabels[i]
-                           : "unnamed";
-        ofs << i << " " << face[0] << " " << face[1] << " " << label << "\n";
+    for (const auto& [name, faces] : mesh.faceSets) {
+        for (std::size_t i = 0; i < faces.size(); ++i) {
+            ofs << name << " " << i;
+            for (std::size_t nodeIdx : faces[i]) {
+                ofs << " " << nodeIdx;
+            }
+            ofs << "\n";
+        }
     }
 
     ofs.close();
@@ -356,22 +361,22 @@ void VTKWriter::writeVTKHeader(std::ostream& os, const std::string& title) {
     os << title << "\n";
 }
 
-void VTKWriter::writeVTKPoints(std::ostream& os, const MeshData& mesh) {
+void VTKWriter::writeVTKPoints(std::ostream& os, const MeshInfo& mesh) {
     os << "POINTS " << mesh.nodes.size() << " double\n";
     for (const auto& node : mesh.nodes) {
         os << node[0] << " " << node[1] << " " << node[2] << "\n";
     }
 }
 
-void VTKWriter::writeVTKCells(std::ostream& os, const MeshData& mesh) {
+void VTKWriter::writeVTKCells(std::ostream& os, const MeshInfo& mesh) {
     // Calculate total size (num_nodes_per_cell + node_indices for each cell)
     std::size_t totalSize = 0;
-    for (const auto& cell : mesh.cells) {
+    for (const auto& cell : mesh.elements) {
         totalSize += 1 + cell.size();  // 1 for count, rest for indices
     }
 
-    os << "CELLS " << mesh.cells.size() << " " << totalSize << "\n";
-    for (const auto& cell : mesh.cells) {
+    os << "CELLS " << mesh.elements.size() << " " << totalSize << "\n";
+    for (const auto& cell : mesh.elements) {
         os << cell.size();
         for (std::size_t nodeIdx : cell) {
             os << " " << nodeIdx;
@@ -380,20 +385,20 @@ void VTKWriter::writeVTKCells(std::ostream& os, const MeshData& mesh) {
     }
 }
 
-void VTKWriter::writeVTKCellTypes(std::ostream& os, const MeshData& mesh) {
-    os << "CELL_TYPES " << mesh.cells.size() << "\n";
-    for (int cellType : mesh.cellTypes) {
+void VTKWriter::writeVTKCellTypes(std::ostream& os, const MeshInfo& mesh) {
+    os << "CELL_TYPES " << mesh.elements.size() << "\n";
+    for (int cellType : mesh.elementTypes) {
         os << cellType << "\n";
     }
 }
 
-void VTKWriter::writeVTKCellData(std::ostream& os, const MeshData& mesh) {
-    os << "CELL_DATA " << mesh.cells.size() << "\n";
+void VTKWriter::writeVTKCellData(std::ostream& os, const MeshInfo& mesh) {
+    os << "CELL_DATA " << mesh.elements.size() << "\n";
 
     // Cell IDs
     os << "SCALARS CellID int 1\n";
     os << "LOOKUP_TABLE default\n";
-    for (std::size_t i = 0; i < mesh.cells.size(); ++i) {
+    for (std::size_t i = 0; i < mesh.elements.size(); ++i) {
         os << i << "\n";
     }
 }

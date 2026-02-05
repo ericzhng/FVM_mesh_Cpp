@@ -43,18 +43,19 @@ public:
      * @brief Get the extracted mesh data.
      * @return Reference to the mesh data structure
      */
-    const MeshData& getMeshData() const { return meshData_; }
+    const MeshInfo& getMeshData() const { return meshData_; }
 
     /**
      * @brief Extract mesh data from current Gmsh model.
-     * Populates the internal MeshData structure.
+     * Populates the internal MeshInfo structure.
      */
     void extractMeshData();
 
 private:
     std::vector<int> surfaceTags_;
     std::string outputDir_;
-    MeshData meshData_;
+    MeshInfo meshData_;
+    std::vector<std::size_t> nodeIds_;  // Gmsh node tags for internal mapping
 
     /// Apply mesh parameters to a surface
     void applyMeshParameters(int surfaceTag, const MeshParams& params);

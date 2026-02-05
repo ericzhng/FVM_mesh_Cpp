@@ -48,4 +48,67 @@
     #define FVM_DEPRECATED
 #endif
 
+// =============================================================================
+// Numeric Type Configuration
+// =============================================================================
+//
+// These macros control the precision and size of numeric types used throughout
+// the FVM library. Define these before including any FVM headers to customize.
+//
+// FVM_USE_SINGLE_PRECISION - Use float instead of double for Real type
+// FVM_USE_32BIT_INT        - Use 32-bit integers for Id/Sid (default is 64-bit)
+//
+
+#include <cstdint>
+#include <cstddef>
+
+namespace fvm {
+
+// -----------------------------------------------------------------------------
+// Floating-point type configuration
+// -----------------------------------------------------------------------------
+
+#ifdef FVM_USE_SINGLE_PRECISION
+    /// Floating-point type for coordinates and field values
+    using Real = float;
+    #define FVM_REAL_SIZE 4
+    #define FVM_REAL_MAX  3.402823466e+38F
+    #define FVM_REAL_MIN  1.175494351e-38F
+    #define FVM_REAL_EPS  1.192092896e-07F
+#else
+    /// Floating-point type for coordinates and field values
+    using Real = double;
+    #define FVM_REAL_SIZE 8
+    #define FVM_REAL_MAX  1.7976931348623158e+308
+    #define FVM_REAL_MIN  2.2250738585072014e-308
+    #define FVM_REAL_EPS  2.2204460492503131e-16
+#endif
+
+// -----------------------------------------------------------------------------
+// Integer type configuration
+// -----------------------------------------------------------------------------
+// Id  - unsigned integer for node/element numbering and connectivity
+// Sid - signed integer for algorithms needing negative values, labels, tags
+
+#ifdef FVM_USE_32BIT_INT
+    using Id = std::uint32_t;
+    using Sid = std::int32_t;
+    #define FVM_INT_SIZE 4
+    #define FVM_ID_MAX   0xFFFFFFFFU
+#else
+    using Id = std::uint64_t;
+    using Sid = std::int64_t;
+    #define FVM_INT_SIZE 8
+    #define FVM_ID_MAX   0xFFFFFFFFFFFFFFFFULL
+#endif
+
+// -----------------------------------------------------------------------------
+// Convenience constants
+// -----------------------------------------------------------------------------
+
+constexpr Id INVALID_ID = static_cast<Id>(-1);
+constexpr Sid INVALID_SID = static_cast<Sid>(-1);
+
+} // namespace fvm
+
 #endif // FVM_EXPORT_HPP
