@@ -16,7 +16,7 @@ target_link_libraries(vtkio_tests
 
 # Inject the path as a macro named TEST_DATA_DIR
 target_compile_definitions(vtkio_tests PRIVATE 
-    TEST_DATA_DIR="${CMAKE_CURRENT_SOURCE_DIR}/data"
+    TEST_DATA_DIR="${CMAKE_SOURCE_DIR}/data"
 )
 
 # Copy vtkio DLL to test directory (Windows shared builds)
