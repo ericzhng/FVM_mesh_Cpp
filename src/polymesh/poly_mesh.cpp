@@ -71,8 +71,7 @@ namespace fvm
         }
 
         // Add element type information for quads
-        mesh.cellElementTypes.resize(mesh.nCells, 0);
-        mesh.elementTypeProperties[0] = {"Quad 4", 4};
+        mesh.cellElementTypes.resize(mesh.nCells, VTKCellType::QUAD);
 
         // Find and tag boundary faces
         std::map<std::pair<std::size_t, std::size_t>, std::vector<std::size_t>> faceToCells;
@@ -265,8 +264,6 @@ namespace fvm
             {
                 continue; // Skip elements not of the mesh's primary dimension
             }
-
-            elementTypeProperties[et] = {name, numNodes};
 
             std::size_t numElements = elemTags[i].size();
             const auto &allNodeTags = elemNodeTags[i];
@@ -907,12 +904,7 @@ namespace fvm
         std::cout << "  Cell Type Distribution:\n";
         for (const auto &[typeId, count] : typeCounts)
         {
-            std::string typeName = "Unknown";
-            auto it = elementTypeProperties.find(typeId);
-            if (it != elementTypeProperties.end())
-            {
-                typeName = it->second.name;
-            }
+            std::string typeName = getVTKCellTypeName(typeId);
             std::cout << "    - " << std::left << std::setw(20)
                       << (typeName + ":") << count << "\n";
         }

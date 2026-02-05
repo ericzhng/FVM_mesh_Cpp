@@ -65,15 +65,6 @@ namespace fvm
     // =============================================================================
 
     /**
-     * @brief Properties of an element type (e.g., triangle, quad, tetrahedron).
-     */
-    struct ElementTypeProperties
-    {
-        std::string name;
-        int numNodes;
-    };
-
-    /**
      * @brief Information about a physical group (boundary or volume region).
      */
     struct PhysicalGroup

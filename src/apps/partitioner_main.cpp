@@ -162,19 +162,7 @@ fvm::MeshInfo localMeshToMeshInfo(const fvm::LocalMesh &localMesh)
     meshInfo.elements = localMesh.cellNodeConnectivity;
 
     // Element Types
-    for (int elemType : localMesh.cellElementTypes)
-    {
-        auto it = localMesh.elementTypeProperties.find(elemType);
-        if (it != localMesh.elementTypeProperties.end())
-        {
-            meshInfo.elementTypes.push_back(fvm::getVTKCellType(it->second.numNodes));
-        }
-        else
-        {
-            // Fallback for unknown types
-            meshInfo.elementTypes.push_back(fvm::VTKCellType::POLYGON);
-        }
-    }
+    meshInfo.elementTypes.assign(localMesh.cellElementTypes.begin(), localMesh.cellElementTypes.end());
 
     return meshInfo;
 }

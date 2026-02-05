@@ -56,9 +56,6 @@ namespace fvm
         /// Element type ID for each cell (Gmsh type codes)
         std::vector<int> cellElementTypes;
 
-        /// Map from element type ID to properties
-        std::unordered_map<int, ElementTypeProperties> elementTypeProperties;
-
         // =========================================================================
         // Topology Data (derived)
         // =========================================================================
