@@ -590,7 +590,7 @@ namespace fvm
             gmsh::model::mesh::generate(2);
 
             MeshGenerator gen(surface, testOutputDir_);
-            EXPECT_NO_THROW(gen.extractMeshInfo());
+            EXPECT_NO_THROW(gen.extractMeshData());
 
             const MeshInfo &data = gen.getMeshData();
             EXPECT_GT(data.nodes.size(), 0u);

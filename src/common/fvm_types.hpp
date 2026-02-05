@@ -41,6 +41,26 @@ namespace fvm
     using FaceNodes = std::vector<Id>;
 
     // =============================================================================
+    // Mesh Interchange Data Structure
+    // =============================================================================
+
+    /// Minimal mesh data structure for format interchange
+    struct MeshInfo
+    {
+        // === Geometry ===
+        std::vector<Point3D> nodes;
+
+        // === Topology ===
+        std::vector<CellConnectivity> elements;
+        std::vector<Sid> elementTypes; // VTK cell types (-1 if unknown)
+
+        // === Named Sets ===
+        std::unordered_map<std::string, std::vector<Id>> nodeSets;
+        std::unordered_map<std::string, std::vector<Id>> elementSets;
+        std::unordered_map<std::string, std::vector<FaceNodes>> faceSets; // boundary groups go here
+    };
+
+    // =============================================================================
     // Element and Physical Group Definitions
     // =============================================================================
 
@@ -109,26 +129,6 @@ namespace fvm
     {
         MeshType meshType = MeshType::Triangles;
         Real charLength = 0.1;
-    };
-
-    // =============================================================================
-    // Mesh Interchange Data Structure
-    // =============================================================================
-
-    /// Minimal mesh data structure for format interchange
-    struct MeshInfo
-    {
-        // === Geometry ===
-        std::vector<Point3D> nodes;
-
-        // === Topology ===
-        std::vector<CellConnectivity> elements;
-        std::vector<Sid> elementTypes; // VTK cell types (-1 if unknown)
-
-        // === Named Sets ===
-        std::unordered_map<std::string, std::vector<Id>> nodeSets;
-        std::unordered_map<std::string, std::vector<Id>> elementSets;
-        std::unordered_map<std::string, std::vector<FaceNodes>> faceSets; // boundary groups go here
     };
 
 } // namespace fvm
