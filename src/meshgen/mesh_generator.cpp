@@ -7,332 +7,385 @@
 #include <set>
 #include <stdexcept>
 #include <unordered_set>
+#include "vtkio/cell_types.hpp"
 
-namespace fvm {
+namespace fvm
+{
 
-MeshGenerator::MeshGenerator(const std::vector<int>& surfaceTags,
-                             const std::string& outputDir)
-    : surfaceTags_(surfaceTags), outputDir_(outputDir) {
-    ensureOutputDir();
-}
-
-MeshGenerator::MeshGenerator(int surfaceTag, const std::string& outputDir)
-    : surfaceTags_({surfaceTag}), outputDir_(outputDir) {
-    ensureOutputDir();
-}
-
-void MeshGenerator::ensureOutputDir() {
-    std::filesystem::create_directories(outputDir_);
-}
-
-void MeshGenerator::generate(const std::map<int, MeshParams>& meshParams,
-                             const std::string& filename) {
-    // Apply mesh parameters for each surface
-    for (int surfaceTag : surfaceTags_) {
-        auto it = meshParams.find(surfaceTag);
-        if (it != meshParams.end()) {
-            applyMeshParameters(surfaceTag, it->second);
-        }
+    MeshGenerator::MeshGenerator(const std::vector<int> &surfaceTags,
+                                 const std::string &outputDir)
+        : surfaceTags_(surfaceTags), outputDir_(outputDir)
+    {
+        ensureOutputDir();
     }
 
-    // Set up physical groups
-    setupPhysicalGroups();
+    MeshGenerator::MeshGenerator(int surfaceTag, const std::string &outputDir)
+        : surfaceTags_({surfaceTag}), outputDir_(outputDir)
+    {
+        ensureOutputDir();
+    }
 
-    // Generate 2D mesh
-    gmsh::model::mesh::generate(2);
+    void MeshGenerator::ensureOutputDir()
+    {
+        std::filesystem::create_directories(outputDir_);
+    }
 
-    // Save mesh to Gmsh format
-    saveMesh(filename);
+    void MeshGenerator::generate(const std::map<int, MeshParams> &meshParams,
+                                 const std::string &filename)
+    {
+        // Apply mesh parameters for each surface
+        for (int surfaceTag : surfaceTags_)
+        {
+            auto it = meshParams.find(surfaceTag);
+            if (it != meshParams.end())
+            {
+                applyMeshParameters(surfaceTag, it->second);
+            }
+        }
 
-    // Extract mesh data for further processing
-    extractMeshData();
+        // Set up physical groups
+        setupPhysicalGroups();
 
-    std::cout << "Mesh generation complete." << std::endl;
-    std::cout << "  Nodes: " << meshData_.nodes.size() << std::endl;
-    std::cout << "  Elements: " << meshData_.elements.size() << std::endl;
-}
+        // Generate 2D mesh
+        gmsh::model::mesh::generate(2);
 
-void MeshGenerator::applyMeshParameters(int surfaceTag, const MeshParams& params) {
-    switch (params.meshType) {
-        case MeshType::Structured:
+        // Save mesh to Gmsh format
+        saveMesh(filename);
+
+        // Extract mesh data for further processing
+        extractMeshData();
+
+        std::cout << "Mesh generation complete." << std::endl;
+        std::cout << "  Nodes: " << meshData_.nodes.size() << std::endl;
+        std::cout << "  Elements: " << meshData_.elements.size() << std::endl;
+    }
+
+    void MeshGenerator::applyMeshParameters(int surfaceTag, const MeshParams &params)
+    {
+        if (params.meshType == "structured")
+        {
             setStructuredMesh(surfaceTag, params.charLength);
-            break;
-        case MeshType::Quads:
+        }
+        else if (params.meshType == "quad")
+        {
             gmsh::model::mesh::setRecombine(2, surfaceTag);
-            break;
-        case MeshType::Triangles:
-            // Default meshing, no special settings needed
-            break;
-    }
-}
-
-void MeshGenerator::setStructuredMesh(int surfaceTag, double charLength) {
-    gmsh::model::mesh::setTransfiniteSurface(surfaceTag);
-    gmsh::model::mesh::setRecombine(2, surfaceTag);
-
-    // Get boundary curves
-    std::vector<std::pair<int, int>> boundaryCurves;
-    gmsh::model::getBoundary({{2, surfaceTag}}, boundaryCurves, false, false, false);
-
-    if (boundaryCurves.size() != 4) {
-        throw std::runtime_error(
-            "Structured mesh is only supported for geometries with 4 boundary curves.");
-    }
-
-    // Get bounding box for calculating number of divisions
-    double minX, minY, minZ, maxX, maxY, maxZ;
-    gmsh::model::getBoundingBox(2, surfaceTag, minX, minY, minZ, maxX, maxY, maxZ);
-
-    double dx = maxX - minX;
-    double dy = maxY - minY;
-    int nx = static_cast<int>(dx / charLength);
-    int ny = static_cast<int>(dy / charLength);
-
-    // Classify curves and set transfinite
-    auto [hCurves, vCurves] = classifyBoundaryCurves(boundaryCurves);
-
-    for (int curveTag : hCurves) {
-        gmsh::model::mesh::setTransfiniteCurve(curveTag, nx + 1);
-    }
-    for (int curveTag : vCurves) {
-        gmsh::model::mesh::setTransfiniteCurve(curveTag, ny + 1);
-    }
-}
-
-std::pair<std::vector<int>, std::vector<int>>
-MeshGenerator::classifyBoundaryCurves(
-    const std::vector<std::pair<int, int>>& boundaryCurves) const {
-
-    std::vector<int> hCurves, vCurves;
-
-    for (const auto& dimTag : boundaryCurves) {
-        int curveTag = dimTag.second;
-
-        // Get curve endpoints
-        std::vector<std::pair<int, int>> pointTags;
-        gmsh::model::getBoundary({{1, curveTag}}, pointTags, false, false, false);
-
-        if (pointTags.size() < 2) continue;
-
-        int pStartTag = pointTags[0].second;
-        int pEndTag = pointTags[1].second;
-
-        std::vector<double> coordStart, coordEnd;
-        std::vector<double> paramCoord;  // unused but required
-        gmsh::model::getValue(0, pStartTag, paramCoord, coordStart);
-        gmsh::model::getValue(0, pEndTag, paramCoord, coordEnd);
-
-        // Classify by orientation
-        if (std::abs(coordStart[1] - coordEnd[1]) < 1e-6) {
-            hCurves.push_back(curveTag);
-        } else {
-            vCurves.push_back(curveTag);
+        }
+        else
+        {
+            // do nothing for triangle
         }
     }
 
-    return {hCurves, vCurves};
-}
+    void MeshGenerator::setStructuredMesh(int surfaceTag, double charLength)
+    {
+        gmsh::model::mesh::setTransfiniteSurface(surfaceTag);
+        gmsh::model::mesh::setRecombine(2, surfaceTag);
 
-void MeshGenerator::setupPhysicalGroups() {
-    // Collect all boundary curves
-    std::set<int> allBoundaryCurves;
-    for (int surfaceTag : surfaceTags_) {
-        std::vector<std::pair<int, int>> boundary;
-        gmsh::model::getBoundary({{2, surfaceTag}}, boundary, false, false, false);
-        for (const auto& dimTag : boundary) {
-            allBoundaryCurves.insert(dimTag.second);
+        // Get boundary curves
+        std::vector<std::pair<int, int>> boundaryCurves;
+        gmsh::model::getBoundary({{2, surfaceTag}}, boundaryCurves, false, false, false);
+
+        if (boundaryCurves.size() != 4)
+        {
+            throw std::runtime_error(
+                "Structured mesh is only supported for geometries with 4 boundary curves.");
+        }
+
+        // Get bounding box for calculating number of divisions
+        double minX, minY, minZ, maxX, maxY, maxZ;
+        gmsh::model::getBoundingBox(2, surfaceTag, minX, minY, minZ, maxX, maxY, maxZ);
+
+        double dx = maxX - minX;
+        double dy = maxY - minY;
+        int nx = static_cast<int>(dx / charLength);
+        int ny = static_cast<int>(dy / charLength);
+
+        // Classify curves and set transfinite
+        auto [hCurves, vCurves] = classifyBoundaryCurves(boundaryCurves);
+
+        for (int curveTag : hCurves)
+        {
+            gmsh::model::mesh::setTransfiniteCurve(curveTag, nx + 1);
+        }
+        for (int curveTag : vCurves)
+        {
+            gmsh::model::mesh::setTransfiniteCurve(curveTag, ny + 1);
         }
     }
 
-    // Find curves already in physical groups
-    std::set<int> curvesInGroups;
-    std::vector<std::pair<int, int>> physicalGroups;
-    gmsh::model::getPhysicalGroups(physicalGroups, 1);
+    std::pair<std::vector<int>, std::vector<int>>
+    MeshGenerator::classifyBoundaryCurves(
+        const std::vector<std::pair<int, int>> &boundaryCurves) const
+    {
 
-    for (const auto& [dim, tag] : physicalGroups) {
-        std::vector<int> entities;
-        gmsh::model::getEntitiesForPhysicalGroup(dim, tag, entities);
-        for (int e : entities) {
-            curvesInGroups.insert(e);
+        std::vector<int> hCurves, vCurves;
+
+        for (const auto &dimTag : boundaryCurves)
+        {
+            int curveTag = dimTag.second;
+
+            // Get curve endpoints
+            std::vector<std::pair<int, int>> pointTags;
+            gmsh::model::getBoundary({{1, curveTag}}, pointTags, false, false, false);
+
+            if (pointTags.size() < 2)
+                continue;
+
+            int pStartTag = pointTags[0].second;
+            int pEndTag = pointTags[1].second;
+
+            std::vector<double> coordStart, coordEnd;
+            std::vector<double> paramCoord; // unused but required
+            gmsh::model::getValue(0, pStartTag, paramCoord, coordStart);
+            gmsh::model::getValue(0, pEndTag, paramCoord, coordEnd);
+
+            // Classify by orientation
+            if (std::abs(coordStart[1] - coordEnd[1]) < 1e-6)
+            {
+                hCurves.push_back(curveTag);
+            }
+            else
+            {
+                vCurves.push_back(curveTag);
+            }
+        }
+
+        return {hCurves, vCurves};
+    }
+
+    void MeshGenerator::setupPhysicalGroups()
+    {
+        // Collect all boundary curves
+        std::set<int> allBoundaryCurves;
+        for (int surfaceTag : surfaceTags_)
+        {
+            std::vector<std::pair<int, int>> boundary;
+            gmsh::model::getBoundary({{2, surfaceTag}}, boundary, false, false, false);
+            for (const auto &dimTag : boundary)
+            {
+                allBoundaryCurves.insert(dimTag.second);
+            }
+        }
+
+        // Find curves already in physical groups
+        std::set<int> curvesInGroups;
+        std::vector<std::pair<int, int>> physicalGroups;
+        gmsh::model::getPhysicalGroups(physicalGroups, 1);
+
+        for (const auto &[dim, tag] : physicalGroups)
+        {
+            std::vector<int> entities;
+            gmsh::model::getEntitiesForPhysicalGroup(dim, tag, entities);
+            for (int e : entities)
+            {
+                curvesInGroups.insert(e);
+            }
+        }
+
+        // Add untagged curves to "unnamed" group
+        std::vector<int> untaggedCurves;
+        for (int curve : allBoundaryCurves)
+        {
+            if (curvesInGroups.find(curve) == curvesInGroups.end())
+            {
+                untaggedCurves.push_back(curve);
+            }
+        }
+        if (!untaggedCurves.empty())
+        {
+            gmsh::model::addPhysicalGroup(1, untaggedCurves, -1, "unnamed");
+        }
+
+        // Handle 2D physical groups (surfaces)
+        std::set<int> surfacesInGroups;
+        gmsh::model::getPhysicalGroups(physicalGroups, 2);
+
+        for (const auto &[dim, tag] : physicalGroups)
+        {
+            std::vector<int> entities;
+            gmsh::model::getEntitiesForPhysicalGroup(dim, tag, entities);
+            for (int e : entities)
+            {
+                surfacesInGroups.insert(e);
+            }
+        }
+
+        // Add untagged surfaces to "fluid" group
+        std::vector<int> untaggedSurfaces;
+        for (int surface : surfaceTags_)
+        {
+            if (surfacesInGroups.find(surface) == surfacesInGroups.end())
+            {
+                untaggedSurfaces.push_back(surface);
+            }
+        }
+        if (!untaggedSurfaces.empty())
+        {
+            gmsh::model::addPhysicalGroup(2, untaggedSurfaces, -1, "fluid");
         }
     }
 
-    // Add untagged curves to "unnamed" group
-    std::vector<int> untaggedCurves;
-    for (int curve : allBoundaryCurves) {
-        if (curvesInGroups.find(curve) == curvesInGroups.end()) {
-            untaggedCurves.push_back(curve);
+    void MeshGenerator::saveMesh(const std::string &filename)
+    {
+        std::string mshFile = outputDir_ + "/" + filename;
+        gmsh::write(mshFile);
+        std::cout << "Mesh saved to: " << mshFile << std::endl;
+    }
+
+    void MeshGenerator::extractMeshData()
+    {
+        extractNodes();
+        extractCells();
+        extractPhysicalGroups();
+        extractFaces();
+    }
+
+    void MeshGenerator::extractNodes()
+    {
+        std::vector<std::size_t> nodeTags;
+        std::vector<double> nodeCoords;
+        std::vector<double> parametricCoords;
+
+        gmsh::model::mesh::getNodes(nodeTags, nodeCoords, parametricCoords);
+
+        meshData_.nodes.clear();
+        nodeIds_.clear();
+        meshData_.nodes.reserve(nodeTags.size());
+        nodeIds_.reserve(nodeTags.size());
+
+        for (std::size_t i = 0; i < nodeTags.size(); ++i)
+        {
+            nodeIds_.push_back(nodeTags[i]);
+            meshData_.nodes.push_back({nodeCoords[3 * i],
+                                       nodeCoords[3 * i + 1],
+                                       nodeCoords[3 * i + 2]});
         }
     }
-    if (!untaggedCurves.empty()) {
-        gmsh::model::addPhysicalGroup(1, untaggedCurves, -1, "unnamed");
-    }
 
-    // Handle 2D physical groups (surfaces)
-    std::set<int> surfacesInGroups;
-    gmsh::model::getPhysicalGroups(physicalGroups, 2);
-
-    for (const auto& [dim, tag] : physicalGroups) {
-        std::vector<int> entities;
-        gmsh::model::getEntitiesForPhysicalGroup(dim, tag, entities);
-        for (int e : entities) {
-            surfacesInGroups.insert(e);
+    void MeshGenerator::extractCells()
+    {
+        // Create node tag to index map
+        std::unordered_map<std::size_t, std::size_t> nodeMap;
+        for (std::size_t i = 0; i < nodeIds_.size(); ++i)
+        {
+            nodeMap[nodeIds_[i]] = i;
         }
-    }
 
-    // Add untagged surfaces to "fluid" group
-    std::vector<int> untaggedSurfaces;
-    for (int surface : surfaceTags_) {
-        if (surfacesInGroups.find(surface) == surfacesInGroups.end()) {
-            untaggedSurfaces.push_back(surface);
-        }
-    }
-    if (!untaggedSurfaces.empty()) {
-        gmsh::model::addPhysicalGroup(2, untaggedSurfaces, -1, "fluid");
-    }
-}
+        meshData_.elements.clear();
+        meshData_.elementTypes.clear();
 
-void MeshGenerator::saveMesh(const std::string& filename) {
-    std::string mshFile = outputDir_ + "/" + filename;
-    gmsh::write(mshFile);
-    std::cout << "Mesh saved to: " << mshFile << std::endl;
-}
+        for (int surfaceTag : surfaceTags_)
+        {
+            std::vector<int> elemTypes;
+            std::vector<std::vector<std::size_t>> elemTags;
+            std::vector<std::vector<std::size_t>> elemNodeTags;
 
-void MeshGenerator::extractMeshData() {
-    extractNodes();
-    extractCells();
-    extractPhysicalGroups();
-    extractFaces();
-}
+            gmsh::model::mesh::getElements(elemTypes, elemTags, elemNodeTags, 2, surfaceTag);
 
-void MeshGenerator::extractNodes() {
-    std::vector<std::size_t> nodeTags;
-    std::vector<double> nodeCoords;
-    std::vector<double> parametricCoords;
+            for (std::size_t i = 0; i < elemTypes.size(); ++i)
+            {
+                int elemType = elemTypes[i];
 
-    gmsh::model::mesh::getNodes(nodeTags, nodeCoords, parametricCoords);
+                // Get element properties
+                std::string name;
+                int dim, order, numNodes, numPrimaryNodes;
+                std::vector<double> localNodeCoords;
+                gmsh::model::mesh::getElementProperties(
+                    elemType, name, dim, order, numNodes, localNodeCoords, numPrimaryNodes);
 
-    meshData_.nodes.clear();
-    nodeIds_.clear();
-    meshData_.nodes.reserve(nodeTags.size());
-    nodeIds_.reserve(nodeTags.size());
+                std::size_t numElements = elemTags[i].size();
+                const auto &allNodeTags = elemNodeTags[i];
 
-    for (std::size_t i = 0; i < nodeTags.size(); ++i) {
-        nodeIds_.push_back(nodeTags[i]);
-        meshData_.nodes.push_back({
-            nodeCoords[3 * i],
-            nodeCoords[3 * i + 1],
-            nodeCoords[3 * i + 2]
-        });
-    }
-}
+                for (std::size_t j = 0; j < numElements; ++j)
+                {
+                    CellConnectivity cell;
+                    cell.reserve(numNodes);
 
-void MeshGenerator::extractCells() {
-    // Create node tag to index map
-    std::unordered_map<std::size_t, std::size_t> nodeMap;
-    for (std::size_t i = 0; i < nodeIds_.size(); ++i) {
-        nodeMap[nodeIds_[i]] = i;
-    }
+                    for (int k = 0; k < numNodes; ++k)
+                    {
+                        std::size_t nodeTag = allNodeTags[j * numNodes + k];
+                        cell.push_back(nodeMap[nodeTag]);
+                    }
 
-    meshData_.elements.clear();
-    meshData_.elementTypes.clear();
-
-    for (int surfaceTag : surfaceTags_) {
-        std::vector<int> elemTypes;
-        std::vector<std::vector<std::size_t>> elemTags;
-        std::vector<std::vector<std::size_t>> elemNodeTags;
-
-        gmsh::model::mesh::getElements(elemTypes, elemTags, elemNodeTags, 2, surfaceTag);
-
-        for (std::size_t i = 0; i < elemTypes.size(); ++i) {
-            int elemType = elemTypes[i];
-
-            // Get element properties
-            std::string name;
-            int dim, order, numNodes, numPrimaryNodes;
-            std::vector<double> localNodeCoords;
-            gmsh::model::mesh::getElementProperties(
-                elemType, name, dim, order, numNodes, localNodeCoords, numPrimaryNodes);
-
-            std::size_t numElements = elemTags[i].size();
-            const auto& allNodeTags = elemNodeTags[i];
-
-            for (std::size_t j = 0; j < numElements; ++j) {
-                CellConnectivity cell;
-                cell.reserve(numNodes);
-
-                for (int k = 0; k < numNodes; ++k) {
-                    std::size_t nodeTag = allNodeTags[j * numNodes + k];
-                    cell.push_back(nodeMap[nodeTag]);
+                    meshData_.elements.push_back(std::move(cell));
+                    meshData_.elementTypes.push_back(getVTKCellType(numNodes));
                 }
-
-                meshData_.elements.push_back(std::move(cell));
-                meshData_.elementTypes.push_back(getVTKCellType(numNodes));
             }
         }
     }
-}
 
-void MeshGenerator::extractPhysicalGroups() {
-    meshData_.nodeSets.clear();
-    meshData_.elementSets.clear();
-    meshData_.faceSets.clear();
+    void MeshGenerator::extractPhysicalGroups()
+    {
+        meshData_.nodeSets.clear();
+        meshData_.elementSets.clear();
+        meshData_.faceSets.clear();
 
-    // Create node tag to index map
-    std::unordered_map<std::size_t, std::size_t> nodeMap;
-    for (std::size_t i = 0; i < nodeIds_.size(); ++i) {
-        nodeMap[nodeIds_[i]] = i;
-    }
-
-    std::vector<std::pair<int, int>> physicalGroups;
-    gmsh::model::getPhysicalGroups(physicalGroups);
-
-    for (const auto& [dim, tag] : physicalGroups) {
-        std::string name;
-        gmsh::model::getPhysicalName(dim, tag, name);
-        if (name.empty()) {
-            name = "group_" + std::to_string(tag);
+        // Create node tag to index map
+        std::unordered_map<std::size_t, std::size_t> nodeMap;
+        for (std::size_t i = 0; i < nodeIds_.size(); ++i)
+        {
+            nodeMap[nodeIds_[i]] = i;
         }
 
-        std::vector<int> entities;
-        gmsh::model::getEntitiesForPhysicalGroup(dim, tag, entities);
+        std::vector<std::pair<int, int>> physicalGroups;
+        gmsh::model::getPhysicalGroups(physicalGroups);
 
-        if (dim == 1) {
-            // Boundary curves -> face sets (edges in 2D)
-            std::vector<FaceNodes> faces;
-            for (int entityTag : entities) {
-                std::vector<int> elemTypes;
-                std::vector<std::vector<std::size_t>> elemTags;
-                std::vector<std::vector<std::size_t>> elemNodeTags;
+        for (const auto &[dim, tag] : physicalGroups)
+        {
+            std::string name;
+            gmsh::model::getPhysicalName(dim, tag, name);
+            if (name.empty())
+            {
+                name = "group_" + std::to_string(tag);
+            }
 
-                gmsh::model::mesh::getElements(elemTypes, elemTags, elemNodeTags, 1, entityTag);
+            std::vector<int> entities;
+            gmsh::model::getEntitiesForPhysicalGroup(dim, tag, entities);
 
-                for (std::size_t i = 0; i < elemTypes.size(); ++i) {
-                    const auto& nodeTags = elemNodeTags[i];
-                    // Line elements have 2 nodes
-                    for (std::size_t j = 0; j + 1 < nodeTags.size(); j += 2) {
-                        FaceNodes face = {nodeMap[nodeTags[j]], nodeMap[nodeTags[j + 1]]};
-                        faces.push_back(face);
+            if (dim == 1)
+            {
+                // Boundary curves -> face sets (edges in 2D)
+                std::vector<FaceNodes> faces;
+                for (int entityTag : entities)
+                {
+                    std::vector<int> elemTypes;
+                    std::vector<std::vector<std::size_t>> elemTags;
+                    std::vector<std::vector<std::size_t>> elemNodeTags;
+
+                    gmsh::model::mesh::getElements(elemTypes, elemTags, elemNodeTags, 1, entityTag);
+
+                    for (std::size_t i = 0; i < elemTypes.size(); ++i)
+                    {
+                        const auto &nodeTags = elemNodeTags[i];
+                        // Line elements have 2 nodes
+                        for (std::size_t j = 0; j + 1 < nodeTags.size(); j += 2)
+                        {
+                            FaceNodes face = {nodeMap[nodeTags[j]], nodeMap[nodeTags[j + 1]]};
+                            faces.push_back(face);
+                        }
                     }
                 }
+                meshData_.faceSets[name] = std::move(faces);
             }
-            meshData_.faceSets[name] = std::move(faces);
-        } else if (dim == 2) {
-            // Surface groups -> element sets
-            std::vector<std::size_t> elementIndices;
-            // Note: For simplicity, we store entity tags; proper implementation
-            // would map surface elements to their indices
-            for (int entityTag : entities) {
-                elementIndices.push_back(static_cast<std::size_t>(entityTag));
+            else if (dim == 2)
+            {
+                // Surface groups -> element sets
+                std::vector<std::size_t> elementIndices;
+                // Note: For simplicity, we store entity tags; proper implementation
+                // would map surface elements to their indices
+                for (int entityTag : entities)
+                {
+                    elementIndices.push_back(static_cast<std::size_t>(entityTag));
+                }
+                meshData_.elementSets[name] = std::move(elementIndices);
             }
-            meshData_.elementSets[name] = std::move(elementIndices);
         }
     }
-}
 
-void MeshGenerator::extractFaces() {
-    // Boundary faces are already extracted in extractPhysicalGroups() as faceSets.
-    // This function can be extended to compute internal faces if needed for FVM.
-}
+    void MeshGenerator::extractFaces()
+    {
+        // Boundary faces are already extracted in extractPhysicalGroups() as faceSets.
+        // This function can be extended to compute internal faces if needed for FVM.
+    }
 
-}  // namespace fvm
+} // namespace fvm

@@ -99,14 +99,24 @@ namespace fvm
             return bc;
         }
 
+        /// Parse string to MeshType
+        inline std::string stringToMeshType(const std::string &str)
+        {
+            if (str == "tri" || str == "triangles")
+                return "tri";
+            if (str == "quads" || str == "quad")
+                return "quad";
+            if (str == "structured")
+                return "structured";
+            return "tri"; // default
+        }
+
         // Parse mesh configuration
         MeshConfig parseMesh(const YAML::Node &node)
         {
             MeshConfig mesh;
 
-            std::string typeStr = getWithDefault<std::string>(node, "type", "triangles");
-            mesh.meshType = stringToMeshType(typeStr);
-
+            mesh.meshType = getWithDefault<std::string>(node, "type", "triangles");
             mesh.meshSize = getWithDefault<double>(node, "meshSize", 0.05);
             mesh.charLength = getWithDefault<double>(node, "charLength", 0.01);
 

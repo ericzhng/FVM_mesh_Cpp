@@ -1,5 +1,6 @@
 #include "poly_mesh.hpp"
 #include "mesh_quality.hpp"
+#include "vtkio/cell_types.hpp"
 
 #include <gmsh.h>
 #include <algorithm>

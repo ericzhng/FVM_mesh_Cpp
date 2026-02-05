@@ -5,6 +5,7 @@
 #include <cmath>
 #include <filesystem>
 #include <stdexcept>
+#include "vtkio/cell_types.hpp"
 
 namespace fvm
 {
@@ -99,7 +100,7 @@ namespace fvm
             MeshGenerator gen(surface, testOutputDir_);
 
             std::map<int, MeshParams> params;
-            params[surface] = {MeshType::Triangles, 0.2};
+            params[surface] = {"tri", 0.2};
 
             EXPECT_NO_THROW(gen.generate(params, "tri_mesh.msh"));
 
@@ -114,7 +115,7 @@ namespace fvm
             MeshGenerator gen(surface, testOutputDir_);
 
             std::map<int, MeshParams> params;
-            params[surface] = {MeshType::Triangles, 0.3};
+            params[surface] = {"tri", 0.3};
 
             gen.generate(params, "tri_mesh.msh");
             const MeshInfo &data = gen.getMeshData();
@@ -138,7 +139,7 @@ namespace fvm
             MeshGenerator gen(surface, testOutputDir_);
 
             std::map<int, MeshParams> params;
-            params[surface] = {MeshType::Triangles, 0.2};
+            params[surface] = {"tri", 0.2};
 
             EXPECT_NO_THROW(gen.generate(params, "circle_tri.msh"));
 
@@ -153,7 +154,7 @@ namespace fvm
             MeshGenerator gen(surface, testOutputDir_);
 
             std::map<int, MeshParams> params;
-            params[surface] = {MeshType::Triangles, 0.2};
+            params[surface] = {"tri", 0.2};
 
             EXPECT_NO_THROW(gen.generate(params, "triangle_tri.msh"));
 
@@ -171,7 +172,7 @@ namespace fvm
             MeshGenerator gen(surface, testOutputDir_);
 
             std::map<int, MeshParams> params;
-            params[surface] = {MeshType::Quads, 0.2};
+            params[surface] = {"quad", 0.2};
 
             EXPECT_NO_THROW(gen.generate(params, "quad_mesh.msh"));
 
@@ -186,7 +187,7 @@ namespace fvm
             MeshGenerator gen(surface, testOutputDir_);
 
             std::map<int, MeshParams> params;
-            params[surface] = {MeshType::Quads, 0.3};
+            params[surface] = {"quad", 0.3};
 
             gen.generate(params, "quad_mesh.msh");
             const MeshInfo &data = gen.getMeshData();
@@ -214,7 +215,7 @@ namespace fvm
             MeshGenerator gen(surface, testOutputDir_);
 
             std::map<int, MeshParams> params;
-            params[surface] = {MeshType::Structured, 0.25};
+            params[surface] = {"structured", 0.25};
 
             EXPECT_NO_THROW(gen.generate(params, "structured_mesh.msh"));
 
@@ -229,7 +230,7 @@ namespace fvm
             MeshGenerator gen(surface, testOutputDir_);
 
             std::map<int, MeshParams> params;
-            params[surface] = {MeshType::Structured, 0.5};
+            params[surface] = {"structured", 0.5};
 
             gen.generate(params, "structured_mesh.msh");
             const MeshInfo &data = gen.getMeshData();
@@ -252,7 +253,7 @@ namespace fvm
             MeshGenerator gen(surface, testOutputDir_);
 
             std::map<int, MeshParams> params;
-            params[surface] = {MeshType::Structured, 0.2};
+            params[surface] = {"structured", 0.2};
 
             // Structured mesh requires 4 boundary curves
             EXPECT_THROW(gen.generate(params, "should_fail.msh"), std::runtime_error);
@@ -268,7 +269,7 @@ namespace fvm
             MeshGenerator gen(surface, testOutputDir_);
 
             std::map<int, MeshParams> params;
-            params[surface] = {MeshType::Triangles, 0.3};
+            params[surface] = {"tri", 0.3};
 
             gen.generate(params, "mesh.msh");
             const MeshInfo &data = gen.getMeshData();
@@ -292,7 +293,7 @@ namespace fvm
             MeshGenerator gen(surface, testOutputDir_);
 
             std::map<int, MeshParams> params;
-            params[surface] = {MeshType::Triangles, 0.3};
+            params[surface] = {"tri", 0.3};
 
             gen.generate(params, "mesh.msh");
             const MeshInfo &data = gen.getMeshData();
@@ -306,7 +307,7 @@ namespace fvm
             MeshGenerator gen(surface, testOutputDir_);
 
             std::map<int, MeshParams> params;
-            params[surface] = {MeshType::Triangles, 0.3};
+            params[surface] = {"tri", 0.3};
 
             gen.generate(params, "mesh.msh");
             const MeshInfo &data = gen.getMeshData();
@@ -332,7 +333,7 @@ namespace fvm
             MeshGenerator gen(surface, testOutputDir_);
 
             std::map<int, MeshParams> params;
-            params[surface] = {MeshType::Triangles, 0.3};
+            params[surface] = {"tri", 0.3};
 
             gen.generate(params, "mesh.msh");
             const MeshInfo &data = gen.getMeshData();
@@ -347,7 +348,7 @@ namespace fvm
             MeshGenerator gen(surface, testOutputDir_);
 
             std::map<int, MeshParams> params;
-            params[surface] = {MeshType::Triangles, 0.3};
+            params[surface] = {"tri", 0.3};
 
             gen.generate(params, "mesh.msh");
             const MeshInfo &data = gen.getMeshData();
@@ -362,7 +363,7 @@ namespace fvm
             MeshGenerator gen(surface, testOutputDir_);
 
             std::map<int, MeshParams> params;
-            params[surface] = {MeshType::Triangles, 0.3};
+            params[surface] = {"tri", 0.3};
 
             gen.generate(params, "mesh.msh");
             const MeshInfo &data = gen.getMeshData();
@@ -421,7 +422,7 @@ namespace fvm
             // Generate mesh
             MeshGenerator gen(surface, testOutputDir_);
             std::map<int, MeshParams> params;
-            params[surface] = {MeshType::Triangles, 0.3};
+            params[surface] = {"tri", 0.3};
             gen.generate(params, "named_boundaries.msh");
 
             const MeshInfo &data = gen.getMeshData();
@@ -452,7 +453,7 @@ namespace fvm
             MeshGenerator gen(surface, testOutputDir_);
 
             std::map<int, MeshParams> params;
-            params[surface] = {MeshType::Triangles, 0.3};
+            params[surface] = {"tri", 0.3};
 
             gen.generate(params, "mesh.msh");
             const MeshInfo &data = gen.getMeshData();
@@ -467,7 +468,7 @@ namespace fvm
             MeshGenerator gen(surface, testOutputDir_);
 
             std::map<int, MeshParams> params;
-            params[surface] = {MeshType::Triangles, 0.3};
+            params[surface] = {"tri", 0.3};
 
             gen.generate(params, "mesh.msh");
             const MeshInfo &data = gen.getMeshData();
@@ -497,7 +498,7 @@ namespace fvm
             MeshGenerator gen(surface, testOutputDir_);
 
             std::map<int, MeshParams> params;
-            params[surface] = {MeshType::Triangles, 0.3};
+            params[surface] = {"tri", 0.3};
 
             gen.generate(params, "output.msh");
 
@@ -511,7 +512,7 @@ namespace fvm
             MeshGenerator gen(surface, testOutputDir_);
 
             std::map<int, MeshParams> params;
-            params[surface] = {MeshType::Triangles, 0.3};
+            params[surface] = {"tri", 0.3};
 
             gen.generate(params, "output.msh");
 
@@ -532,7 +533,7 @@ namespace fvm
 
             MeshGenerator gen1(surface1, testOutputDir_);
             std::map<int, MeshParams> params1;
-            params1[surface1] = {MeshType::Triangles, 0.5};
+            params1[surface1] = {"tri", 0.5};
             gen1.generate(params1, "coarse.msh");
             std::size_t coarseElements = gen1.getMeshData().elements.size();
 
@@ -544,7 +545,7 @@ namespace fvm
 
             MeshGenerator gen2(surface2, testOutputDir_);
             std::map<int, MeshParams> params2;
-            params2[surface2] = {MeshType::Triangles, 0.1};
+            params2[surface2] = {"tri", 0.1};
             gen2.generate(params2, "fine.msh");
             std::size_t fineElements = gen2.getMeshData().elements.size();
 
@@ -568,8 +569,8 @@ namespace fvm
             MeshGenerator gen(surfaces, testOutputDir_);
 
             std::map<int, MeshParams> params;
-            params[rect1] = {MeshType::Triangles, 0.2};
-            params[rect2] = {MeshType::Quads, 0.2};
+            params[rect1] = {"tri", 0.2};
+            params[rect2] = {"quad", 0.2};
 
             EXPECT_NO_THROW(gen.generate(params, "multi.msh"));
 

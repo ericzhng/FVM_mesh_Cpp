@@ -195,7 +195,7 @@ int main() {
     // Generate mesh
     fvm::MeshGenerator mesher(surface, "output");
     std::map<int, fvm::MeshParams> params;
-    params[surface] = {fvm::MeshType::Quads, 0.01};
+    params[surface] = {"tri", 0.01};
     mesher.generate(params, "mesh.msh");
 
     // Export to VTK

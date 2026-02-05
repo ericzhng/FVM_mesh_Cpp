@@ -13,7 +13,6 @@
  */
 
 #include "fvm_export.hpp"
-#include "vtkio/cell_types.hpp" // VTK cell type definitions
 #include <array>
 #include <string>
 #include <unordered_map>
@@ -58,68 +57,6 @@ namespace fvm
         std::unordered_map<std::string, std::vector<Id>> nodeSets;
         std::unordered_map<std::string, std::vector<Id>> elementSets;
         std::unordered_map<std::string, std::vector<FaceNodes>> faceSets; // boundary groups go here
-    };
-
-    // =============================================================================
-    // Element and Physical Group Definitions
-    // =============================================================================
-
-    /**
-     * @brief Information about a physical group (boundary or volume region).
-     */
-    struct PhysicalGroup
-    {
-        Sid dimension;
-        Sid tag;
-        std::string name;
-        std::vector<Sid> entities;
-    };
-
-    // =============================================================================
-    // Mesh Type Enumeration
-    // =============================================================================
-
-    /// Mesh type enumeration
-    enum class MeshType
-    {
-        Triangles, // Unstructured triangular mesh
-        Quads,     // Unstructured quadrilateral mesh
-        Structured // Structured quadrilateral mesh
-    };
-
-    /// Convert MeshType to string
-    inline std::string meshTypeToString(MeshType type)
-    {
-        switch (type)
-        {
-        case MeshType::Triangles:
-            return "tri";
-        case MeshType::Quads:
-            return "quads";
-        case MeshType::Structured:
-            return "structured";
-        default:
-            return "unknown";
-        }
-    }
-
-    /// Parse string to MeshType
-    inline MeshType stringToMeshType(const std::string &str)
-    {
-        if (str == "tri" || str == "triangles")
-            return MeshType::Triangles;
-        if (str == "quads" || str == "quad")
-            return MeshType::Quads;
-        if (str == "structured")
-            return MeshType::Structured;
-        return MeshType::Triangles; // default
-    }
-
-    /// Mesh parameters for a surface
-    struct MeshParams
-    {
-        MeshType meshType = MeshType::Triangles;
-        Real charLength = 0.1;
     };
 
 } // namespace fvm

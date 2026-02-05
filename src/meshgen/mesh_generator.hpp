@@ -6,87 +6,95 @@
 #include <string>
 #include <vector>
 
-namespace fvm {
-
-/**
- * @brief A class to generate 2D meshes using Gmsh.
- *
- * This class handles the generation of structured, triangular, and quadrilateral
- * meshes, and provides methods for saving the generated mesh to various formats.
- */
-class FVM_API MeshGenerator {
-public:
-    /**
-     * @brief Construct a new MeshGenerator object.
-     * @param surfaceTags List of surface tags to be meshed
-     * @param outputDir Directory to save output files
-     */
-    MeshGenerator(const std::vector<int>& surfaceTags,
-                  const std::string& outputDir = ".");
+namespace fvm
+{
+    /// Mesh parameters for a surface
+    struct MeshParams
+    {
+        std::string meshType = "triangle";
+        Real charLength = 0.1;
+    };
 
     /**
-     * @brief Construct with a single surface tag.
-     * @param surfaceTag Surface tag to be meshed
-     * @param outputDir Directory to save output files
+     * @brief A class to generate 2D meshes using Gmsh.
+     *
+     * This class handles the generation of structured, triangular, and quadrilateral
+     * meshes, and provides methods for saving the generated mesh to various formats.
      */
-    MeshGenerator(int surfaceTag, const std::string& outputDir = ".");
+    class FVM_API MeshGenerator
+    {
+    public:
+        /**
+         * @brief Construct a new MeshGenerator object.
+         * @param surfaceTags List of surface tags to be meshed
+         * @param outputDir Directory to save output files
+         */
+        MeshGenerator(const std::vector<int> &surfaceTags,
+                      const std::string &outputDir = ".");
 
-    /**
-     * @brief Generate the mesh for the specified surfaces.
-     * @param meshParams Map of surface tags to mesh parameters
-     * @param filename Output filename (without path)
-     */
-    void generate(const std::map<int, MeshParams>& meshParams,
-                  const std::string& filename = "mesh.msh");
+        /**
+         * @brief Construct with a single surface tag.
+         * @param surfaceTag Surface tag to be meshed
+         * @param outputDir Directory to save output files
+         */
+        MeshGenerator(int surfaceTag, const std::string &outputDir = ".");
 
-    /**
-     * @brief Get the extracted mesh data.
-     * @return Reference to the mesh data structure
-     */
-    const MeshInfo& getMeshData() const { return meshData_; }
+        /**
+         * @brief Generate the mesh for the specified surfaces.
+         * @param meshParams Map of surface tags to mesh parameters
+         * @param filename Output filename (without path)
+         */
+        void generate(const std::map<int, MeshParams> &meshParams,
+                      const std::string &filename = "mesh.msh");
 
-    /**
-     * @brief Extract mesh data from current Gmsh model.
-     * Populates the internal MeshInfo structure.
-     */
-    void extractMeshData();
+        /**
+         * @brief Get the extracted mesh data.
+         * @return Reference to the mesh data structure
+         */
+        const MeshInfo &getMeshData() const { return meshData_; }
 
-private:
-    std::vector<int> surfaceTags_;
-    std::string outputDir_;
-    MeshInfo meshData_;
-    std::vector<std::size_t> nodeIds_;  // Gmsh node tags for internal mapping
+        /**
+         * @brief Extract mesh data from current Gmsh model.
+         * Populates the internal MeshInfo structure.
+         */
+        void extractMeshData();
 
-    /// Apply mesh parameters to a surface
-    void applyMeshParameters(int surfaceTag, const MeshParams& params);
+    private:
+        std::vector<int> surfaceTags_;
+        std::string outputDir_;
+        MeshInfo meshData_;
+        std::vector<std::size_t> nodeIds_; // Gmsh node tags for internal mapping
 
-    /// Set up structured mesh on a surface
-    void setStructuredMesh(int surfaceTag, double charLength);
+        /// Apply mesh parameters to a surface
+        void applyMeshParameters(int surfaceTag, const MeshParams &params);
 
-    /// Classify boundary curves into horizontal and vertical
-    std::pair<std::vector<int>, std::vector<int>>
-    classifyBoundaryCurves(const std::vector<std::pair<int, int>>& boundaryCurves) const;
+        /// Set up structured mesh on a surface
+        void setStructuredMesh(int surfaceTag, double charLength);
 
-    /// Set up physical groups for boundaries and surfaces
-    void setupPhysicalGroups();
+        /// Classify boundary curves into horizontal and vertical
+        std::pair<std::vector<int>, std::vector<int>>
+        classifyBoundaryCurves(const std::vector<std::pair<int, int>> &boundaryCurves) const;
 
-    /// Save mesh to Gmsh MSH format
-    void saveMesh(const std::string& filename);
+        /// Set up physical groups for boundaries and surfaces
+        void setupPhysicalGroups();
 
-    /// Extract nodes from Gmsh model
-    void extractNodes();
+        /// Save mesh to Gmsh MSH format
+        void saveMesh(const std::string &filename);
 
-    /// Extract cells from Gmsh model
-    void extractCells();
+        /// Extract nodes from Gmsh model
+        void extractNodes();
 
-    /// Extract physical groups from Gmsh model
-    void extractPhysicalGroups();
+        /// Extract cells from Gmsh model
+        void extractCells();
 
-    /// Extract face connectivity for FVM
-    void extractFaces();
+        /// Extract physical groups from Gmsh model
+        void extractPhysicalGroups();
 
-    /// Create output directory if it doesn't exist
-    void ensureOutputDir();
-};
+        /// Extract face connectivity for FVM
+        void extractFaces();
 
-}  // namespace fvm
+        /// Create output directory if it doesn't exist
+        void ensureOutputDir();
+    };
+
+} // namespace fvm

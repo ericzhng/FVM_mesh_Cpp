@@ -93,9 +93,9 @@ namespace fvm
      */
     struct FVM_API MeshConfig
     {
-        MeshType meshType = MeshType::Triangles; ///< Type of mesh elements
-        double meshSize = 0.05;                  ///< Initial mesh size for geometry creation
-        double charLength = 0.01;                ///< Characteristic element length
+        std::string meshType = ""; ///< Type of mesh elements
+        double meshSize = 0.05;    ///< Initial mesh size for geometry creation
+        double charLength = 0.01;  ///< Characteristic element length
     };
 
     // =============================================================================

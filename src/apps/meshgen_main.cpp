@@ -158,7 +158,7 @@ int main(int argc, char *argv[])
         fvm::MeshGenerator mesher(surfaceTag, outputDir);
 
         std::map<int, fvm::MeshParams> meshParams;
-        meshParams[surfaceTag] = {fvm::MeshType::Quads, charLength};
+        meshParams[surfaceTag] = {"quad", charLength};
 
         mesher.generate(meshParams, "sample_rect_mesh.msh");
 
