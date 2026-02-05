@@ -37,74 +37,74 @@ namespace fvm
         int dimension = 0;
 
         /// Total number of nodes (vertices)
-        std::size_t nNodes = 0;
+        Index nNodes = 0;
 
         /// Total number of cells (elements)
-        std::size_t nCells = 0;
+        Index nCells = 0;
 
         // =========================================================================
         // Topology Data (read or defined)
         // =========================================================================
 
         /// Node coordinates: shape (nNodes, 3)
-        std::vector<std::array<double, 3>> nodeCoords;
+        std::vector<std::array<Real, 3>> nodeCoords;
 
         /// Cell-node connectivity: jagged array where each inner vector contains
         /// the node indices for a single cell
-        std::vector<std::vector<std::size_t>> cellNodeConnectivity;
+        std::vector<std::vector<Index>> cellNodeConnectivity;
 
         /// Element type ID for each cell (Gmsh type codes)
-        std::vector<int> cellElementTypes;
+        std::vector<Index> cellElementTypes;
 
         // =========================================================================
         // Topology Data (derived)
         // =========================================================================
 
         /// Faces for each cell: cellFaceNodes[cell][face] = vector of node indices
-        std::vector<std::vector<std::vector<std::size_t>>> cellFaceNodes;
+        std::vector<std::vector<std::vector<Index>>> cellFaceNodes;
 
         /// Neighbor cell indices for each face of each cell (-1 for boundary)
         /// Shape: (nCells, maxFacesPerCell)
-        std::vector<std::vector<int>> cellNeighbors;
+        std::vector<std::vector<Index>> cellNeighbors;
 
         /// Physical tag for each face of each cell (0 for interior faces)
         /// Shape: (nCells, maxFacesPerCell)
-        std::vector<std::vector<int>> cellFaceTags;
+        std::vector<std::vector<Index>> cellFaceTags;
 
         // =========================================================================
         // Boundary Data
         // =========================================================================
 
         /// Node indices for each unique boundary face
-        std::vector<std::vector<std::size_t>> boundaryFaceNodes;
+        std::vector<std::vector<Index>> boundaryFaceNodes;
 
         /// Physical tag for each unique boundary face
-        std::vector<int> boundaryFaceTags;
+        std::vector<Index> boundaryFaceTags;
 
         /// Mapping from physical group names to their integer tags
-        std::unordered_map<std::string, int> boundaryPatchMap;
+        std::unordered_map<std::string, Index> boundaryPatchMap;
 
         // =========================================================================
         // Computed Geometric Properties
         // =========================================================================
 
         /// Geometric center of each cell: shape (nCells, 3)
-        std::vector<std::array<double, 3>> cellCentroids;
+        std::vector<std::array<Real, 3>> cellCentroids;
 
         /// Volume (3D) or area (2D) of each cell
-        std::vector<double> cellVolumes;
+        std::vector<Real> cellVolumes;
 
         /// Geometric center of each face: shape (nCells, maxFaces, 3)
-        std::vector<std::vector<std::array<double, 3>>> cellFaceMidpoints;
+        std::vector<std::vector<std::array<Real, 3>>> cellFaceMidpoints;
 
         /// Outward normal vector of each face: shape (nCells, maxFaces, 3)
-        std::vector<std::vector<std::array<double, 3>>> cellFaceNormals;
+        std::vector<std::vector<std::array<Real, 3>>> cellFaceNormals;
 
         /// Area (3D) or length (2D) of each face: shape (nCells, maxFaces)
-        std::vector<std::vector<double>> cellFaceAreas;
+        std::vector<std::vector<Real>> cellFaceAreas;
 
         /// Distance from each face's midpoint to its cell's centroid
-        std::vector<std::vector<double>> faceToCentroidDistances;
+        std::vector<std::vector<Real>> faceToCentroidDistances;
 
         // =========================================================================
         // Quality Metrics
@@ -140,7 +140,7 @@ namespace fvm
          * @param ny Number of cells in y-direction
          * @return A new, analyzed PolyMesh instance
          */
-        static PolyMesh createStructuredQuadMesh(int nx, int ny);
+        static PolyMesh createStructuredQuadMesh(Index nx, Index ny);
 
         // =========================================================================
         // Public API
@@ -186,7 +186,7 @@ namespace fvm
         // =========================================================================
 
         bool isAnalyzed_ = false;
-        std::unordered_map<std::size_t, std::size_t> tagToIndex_;
+        std::unordered_map<Index, Index> tagToIndex_;
 
         // =========================================================================
         // Mesh I/O Methods
@@ -201,8 +201,8 @@ namespace fvm
         // =========================================================================
 
         void extractCellFaces();
-        std::vector<std::vector<std::size_t>> getFacesForCell(
-            const std::vector<std::size_t> &conn) const;
+        std::vector<std::vector<Index>> getFacesForCell(
+            const std::vector<Index> &conn) const;
         void computeFaceTopology();
 
         // =========================================================================
@@ -211,10 +211,10 @@ namespace fvm
 
         void computeCellCentroids();
         void computeFaceProperties();
-        void compute2DFaceMetrics(std::size_t ci, std::size_t fi,
-                                  const std::vector<std::array<double, 3>> &nodes);
-        void compute3DFaceMetrics(std::size_t ci, std::size_t fi,
-                                  const std::vector<std::array<double, 3>> &nodes);
+        void compute2DFaceMetrics(Index ci, Index fi,
+                                  const std::vector<std::array<Real, 3>> &nodes);
+        void compute3DFaceMetrics(Index ci, Index fi,
+                                  const std::vector<std::array<Real, 3>> &nodes);
         void orientFaceNormals();
         void computeFaceToCentroidDist();
         void computeCellVolumes();
@@ -230,7 +230,7 @@ namespace fvm
         void printGeometricProperties() const;
         void printCellGeometry() const;
         void printCellTypeDistribution() const;
-        void printStatLine(const std::string &name, const std::vector<double> &data) const;
+        void printStatLine(const std::string &name, const std::vector<Real> &data) const;
     };
 
 } // namespace fvm

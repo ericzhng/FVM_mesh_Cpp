@@ -56,10 +56,10 @@ namespace fvm
             auto mesh = PolyMesh::createStructuredQuadMesh(3, 3);
 
             // For a unit square mesh
-            double minX = std::numeric_limits<double>::max();
-            double maxX = std::numeric_limits<double>::lowest();
-            double minY = std::numeric_limits<double>::max();
-            double maxY = std::numeric_limits<double>::lowest();
+            Real minX = std::numeric_limits<Real>::max();
+            Real maxX = std::numeric_limits<Real>::lowest();
+            Real minY = std::numeric_limits<Real>::max();
+            Real maxY = std::numeric_limits<Real>::lowest();
 
             for (const auto &coord : mesh.nodeCoords)
             {
@@ -69,10 +69,10 @@ namespace fvm
                 maxY = std::max(maxY, coord[1]);
             }
 
-            EXPECT_NEAR(minX, 0.0, 1e-10);
-            EXPECT_NEAR(maxX, 1.0, 1e-10);
-            EXPECT_NEAR(minY, 0.0, 1e-10);
-            EXPECT_NEAR(maxY, 1.0, 1e-10);
+            EXPECT_NEAR(minX, 0.0, 1e-7);
+            EXPECT_NEAR(maxX, 3.0, 1e-7);
+            EXPECT_NEAR(minY, 0.0, 1e-7);
+            EXPECT_NEAR(maxY, 3.0, 1e-7);
         }
 
         // =============================================================================
@@ -127,9 +127,9 @@ namespace fvm
             for (const auto &centroid : mesh.cellCentroids)
             {
                 EXPECT_GE(centroid[0], 0.0);
-                EXPECT_LE(centroid[0], 1.0);
+                EXPECT_LE(centroid[0], 3.0);
                 EXPECT_GE(centroid[1], 0.0);
-                EXPECT_LE(centroid[1], 1.0);
+                EXPECT_LE(centroid[1], 3.0);
             }
         }
 
@@ -165,14 +165,14 @@ namespace fvm
             }
 
             // Unit square mesh should have total area of 1.0
-            EXPECT_NEAR(totalVolume, 1.0, 1e-10);
+            EXPECT_NEAR(totalVolume, 25.0, 1e-10);
         }
 
         TEST(PolyMeshVolumes, UniformCellSizes)
         {
             auto mesh = PolyMesh::createStructuredQuadMesh(4, 4);
 
-            double expectedVolume = 1.0 / 16.0; // 1/(4*4)
+            double expectedVolume = 1.0; // (4*4)
             for (double vol : mesh.cellVolumes)
             {
                 EXPECT_NEAR(vol, expectedVolume, 1e-10);

@@ -35,38 +35,38 @@ namespace fvm
         return mesh;
     }
 
-    PolyMesh PolyMesh::createStructuredQuadMesh(int nx, int ny)
+    PolyMesh PolyMesh::createStructuredQuadMesh(Index nx, Index ny)
     {
         PolyMesh mesh;
         mesh.dimension = 2;
 
-        int numNodesX = nx + 1;
-        int numNodesY = ny + 1;
-        mesh.nNodes = static_cast<std::size_t>(numNodesX * numNodesY);
-        mesh.nCells = static_cast<std::size_t>(nx * ny);
+        Index numNodesX = nx + 1;
+        Index numNodesY = ny + 1;
+        mesh.nNodes = numNodesX * numNodesY;
+        mesh.nCells = nx * ny;
 
         // Generate node coordinates
         mesh.nodeCoords.reserve(mesh.nNodes);
-        for (int j = 0; j < numNodesY; ++j)
+        for (auto j = 0; j < numNodesY; ++j)
         {
-            for (int i = 0; i < numNodesX; ++i)
+            for (auto i = 0; i < numNodesX; ++i)
             {
-                mesh.nodeCoords.push_back({static_cast<double>(i),
-                                           static_cast<double>(j),
+                mesh.nodeCoords.push_back({static_cast<Real>(i),
+                                           static_cast<Real>(j),
                                            0.0});
             }
         }
 
         // Generate cell connectivity
         mesh.cellNodeConnectivity.reserve(mesh.nCells);
-        for (int j = 0; j < ny; ++j)
+        for (auto j = 0; j < ny; ++j)
         {
-            for (int i = 0; i < nx; ++i)
+            for (auto i = 0; i < nx; ++i)
             {
-                std::size_t n0 = static_cast<std::size_t>(j * numNodesX + i);
-                std::size_t n1 = static_cast<std::size_t>(j * numNodesX + (i + 1));
-                std::size_t n2 = static_cast<std::size_t>((j + 1) * numNodesX + (i + 1));
-                std::size_t n3 = static_cast<std::size_t>((j + 1) * numNodesX + i);
+                Index n0 = j * numNodesX + i;
+                Index n1 = j * numNodesX + (i + 1);
+                Index n2 = (j + 1) * numNodesX + (i + 1);
+                Index n3 = (j + 1) * numNodesX + i;
                 mesh.cellNodeConnectivity.push_back({n0, n1, n2, n3});
             }
         }
@@ -75,19 +75,19 @@ namespace fvm
         mesh.cellElementTypes.resize(mesh.nCells, VTKCellType::QUAD);
 
         // Find and tag boundary faces
-        std::map<std::pair<std::size_t, std::size_t>, std::vector<std::size_t>> faceToCells;
+        std::map<std::pair<Index, Index>, std::vector<Index>> faceToCells;
 
-        for (std::size_t cellIdx = 0; cellIdx < mesh.nCells; ++cellIdx)
+        for (auto cellIdx = 0; cellIdx < mesh.nCells; ++cellIdx)
         {
             const auto &conn = mesh.cellNodeConnectivity[cellIdx];
-            for (std::size_t i = 0; i < 4; ++i)
+            for (auto i = 0; i < 4; ++i)
             {
                 auto edge = std::minmax(conn[i], conn[(i + 1) % 4]);
                 faceToCells[edge].push_back(cellIdx);
             }
         }
 
-        int bottomTag = 1, rightTag = 2, topTag = 3, leftTag = 4;
+        Index bottomTag = 1, rightTag = 2, topTag = 3, leftTag = 4;
 
         for (const auto &[faceNodes, cells] : faceToCells)
         {
@@ -96,7 +96,7 @@ namespace fvm
                 const auto &node1Coords = mesh.nodeCoords[faceNodes.first];
                 const auto &node2Coords = mesh.nodeCoords[faceNodes.second];
 
-                int tag = 0;
+                Index tag = 0;
                 if (std::abs(node1Coords[1]) < 1e-9 && std::abs(node2Coords[1]) < 1e-9)
                 {
                     tag = bottomTag;
@@ -227,14 +227,14 @@ namespace fvm
 
         gmsh::model::mesh::getNodes(nodeTags, coords, parametricCoords);
 
-        nNodes = nodeTags.size();
-        nodeCoords.resize(nNodes);
+        nNodes = static_cast<Index>(nodeTags.size());
+        nodeCoords.resize(nodeTags.size());
         tagToIndex_.clear();
 
-        for (std::size_t i = 0; i < nNodes; ++i)
+        for (auto i = 0; i < nNodes; ++i)
         {
             tagToIndex_[nodeTags[i]] = i;
-            nodeCoords[i] = {coords[3 * i], coords[3 * i + 1], coords[3 * i + 2]};
+            nodeCoords[i] = {static_cast<Real>(coords[3 * i]), static_cast<Real>(coords[3 * i + 1]), static_cast<Real>(coords[3 * i + 2])};
         }
     }
 
@@ -251,7 +251,7 @@ namespace fvm
         cellNodeConnectivity.clear();
         cellElementTypes.clear();
 
-        for (std::size_t i = 0; i < elemTypes.size(); ++i)
+        for (auto i = 0; i < elemTypes.size(); ++i)
         {
             int et = elemTypes[i];
 
@@ -266,26 +266,26 @@ namespace fvm
                 continue; // Skip elements not of the mesh's primary dimension
             }
 
-            std::size_t numElements = elemTags[i].size();
+            auto numElements = elemTags[i].size();
             const auto &allNodeTags = elemNodeTags[i];
 
-            for (std::size_t j = 0; j < numElements; ++j)
+            for (auto j = 0; j < numElements; ++j)
             {
-                std::vector<std::size_t> conn;
+                std::vector<Index> conn;
                 conn.reserve(numNodes);
 
-                for (int k = 0; k < numNodes; ++k)
+                for (auto k = 0; k < numNodes; ++k)
                 {
-                    std::size_t nodeTag = allNodeTags[j * numNodes + k];
+                    auto nodeTag = allNodeTags[j * numNodes + k];
                     conn.push_back(tagToIndex_[nodeTag]);
                 }
 
                 cellNodeConnectivity.push_back(std::move(conn));
-                cellElementTypes.push_back(et);
+                cellElementTypes.push_back(static_cast<Index>(et));
             }
         }
 
-        nCells = cellNodeConnectivity.size();
+        nCells = static_cast<Index>(cellNodeConnectivity.size());
     }
 
     void PolyMesh::readPhysicalGroups()
@@ -294,7 +294,7 @@ namespace fvm
         if (bdim < 0)
             return;
 
-        std::map<std::set<std::size_t>, std::pair<std::vector<std::size_t>, int>> facesMap;
+        std::map<std::set<Index>, std::pair<std::vector<Index>, Index>> facesMap;
 
         std::vector<std::pair<int, int>> physicalGroups;
         gmsh::model::getPhysicalGroups(physicalGroups, bdim);
@@ -307,7 +307,7 @@ namespace fvm
             {
                 name = std::to_string(tag);
             }
-            boundaryPatchMap[name] = tag;
+            boundaryPatchMap[name] = static_cast<Index>(tag);
 
             std::vector<int> entities;
             gmsh::model::getEntitiesForPhysicalGroup(dim, tag, entities);
@@ -327,7 +327,7 @@ namespace fvm
                     continue;
                 }
 
-                for (std::size_t i = 0; i < eTypes.size(); ++i)
+                for (auto i = 0; i < eTypes.size(); ++i)
                 {
                     std::string eName;
                     int eDim, eOrder, eNumNodes, ePrimaryNodes;
@@ -336,14 +336,14 @@ namespace fvm
                         eTypes[i], eName, eDim, eOrder, eNumNodes, eLocalCoords, ePrimaryNodes);
 
                     const auto &nodeTags = eNodeTags[i];
-                    for (std::size_t j = 0; j + eNumNodes - 1 < nodeTags.size(); j += eNumNodes)
+                    for (auto j = 0; j + eNumNodes - 1 < nodeTags.size(); j += eNumNodes)
                     {
-                        std::vector<std::size_t> faceNodes;
-                        std::set<std::size_t> faceKey;
+                        std::vector<Index> faceNodes;
+                        std::set<Index> faceKey;
 
-                        for (int k = 0; k < eNumNodes; ++k)
+                        for (auto k = 0; k < eNumNodes; ++k)
                         {
-                            std::size_t nodeIdx = tagToIndex_[nodeTags[j + k]];
+                            auto nodeIdx = tagToIndex_[nodeTags[j + k]];
                             faceNodes.push_back(nodeIdx);
                             faceKey.insert(nodeIdx);
                         }
@@ -385,18 +385,18 @@ namespace fvm
         }
     }
 
-    std::vector<std::vector<std::size_t>> PolyMesh::getFacesForCell(
-        const std::vector<std::size_t> &conn) const
+    std::vector<std::vector<Index>> PolyMesh::getFacesForCell(
+        const std::vector<Index> &conn) const
     {
 
-        std::vector<std::vector<std::size_t>> faces;
-        std::size_t numNodes = conn.size();
+        std::vector<std::vector<Index>> faces;
+        Index numNodes = conn.size();
 
         if (dimension == 2)
         {
             // For 2D cells, faces are edges
             faces.reserve(numNodes);
-            for (std::size_t i = 0; i < numNodes; ++i)
+            for (auto i = 0; i < numNodes; ++i)
             {
                 faces.push_back({conn[i], conn[(i + 1) % numNodes]});
             }
@@ -404,14 +404,14 @@ namespace fvm
         else if (dimension == 3)
         {
             // Templates for 3D cell face ordering
-            static const std::vector<std::vector<std::size_t>> tetFaces = {
+            static const std::vector<std::vector<Index>> tetFaces = {
                 {0, 1, 2}, {0, 3, 1}, {1, 3, 2}, {2, 0, 3}};
-            static const std::vector<std::vector<std::size_t>> hexFaces = {
+            static const std::vector<std::vector<Index>> hexFaces = {
                 {0, 1, 2, 3}, {4, 5, 6, 7}, {0, 1, 5, 4}, {1, 2, 6, 5}, {2, 3, 7, 6}, {3, 0, 4, 7}};
-            static const std::vector<std::vector<std::size_t>> wedgeFaces = {
+            static const std::vector<std::vector<Index>> wedgeFaces = {
                 {0, 1, 2}, {3, 4, 5}, {0, 1, 4, 3}, {1, 2, 5, 4}, {2, 0, 3, 5}};
 
-            const std::vector<std::vector<std::size_t>> *faceTemplate = nullptr;
+            const std::vector<std::vector<Index>> *faceTemplate = nullptr;
 
             if (numNodes == 4)
             {
@@ -431,9 +431,9 @@ namespace fvm
                 faces.reserve(faceTemplate->size());
                 for (const auto &face : *faceTemplate)
                 {
-                    std::vector<std::size_t> faceNodes;
+                    std::vector<Index> faceNodes;
                     faceNodes.reserve(face.size());
-                    for (std::size_t idx : face)
+                    for (auto idx : face)
                     {
                         faceNodes.push_back(conn[idx]);
                     }
@@ -451,46 +451,46 @@ namespace fvm
             return;
 
         // Build lookup map: face (sorted node tuple) -> cells sharing it
-        std::map<std::vector<std::size_t>, std::vector<std::size_t>> faceToCellMap;
+        std::map<std::vector<Index>, std::vector<Index>> faceToCellMap;
 
-        for (std::size_t cellIdx = 0; cellIdx < nCells; ++cellIdx)
+        for (auto cellIdx = 0; cellIdx < nCells; ++cellIdx)
         {
             for (const auto &face : cellFaceNodes[cellIdx])
             {
-                std::vector<std::size_t> key = face;
+                std::vector<Index> key = face;
                 std::sort(key.begin(), key.end());
                 faceToCellMap[key].push_back(cellIdx);
             }
         }
 
         // Build boundary face lookup
-        std::map<std::set<std::size_t>, int> boundaryFaceMap;
-        for (std::size_t i = 0; i < boundaryFaceNodes.size(); ++i)
+        std::map<std::set<Index>, Index> boundaryFaceMap;
+        for (auto i = 0; i < boundaryFaceNodes.size(); ++i)
         {
-            std::set<std::size_t> key(boundaryFaceNodes[i].begin(),
-                                      boundaryFaceNodes[i].end());
+            std::set<Index> key(boundaryFaceNodes[i].begin(),
+                                boundaryFaceNodes[i].end());
             boundaryFaceMap[key] = boundaryFaceTags[i];
         }
 
         // Initialize arrays
-        std::size_t maxFaces = 0;
+        Index maxFaces = 0;
         for (const auto &faces : cellFaceNodes)
         {
-            maxFaces = std::max(maxFaces, faces.size());
+            maxFaces = std::max(maxFaces, static_cast<Index>(faces.size()));
         }
 
         cellNeighbors.resize(nCells);
         cellFaceTags.resize(nCells);
 
-        for (std::size_t cellIdx = 0; cellIdx < nCells; ++cellIdx)
+        for (auto cellIdx = 0; cellIdx < nCells; ++cellIdx)
         {
-            std::size_t numFaces = cellFaceNodes[cellIdx].size();
+            auto numFaces = cellFaceNodes[cellIdx].size();
             cellNeighbors[cellIdx].resize(numFaces, -1);
             cellFaceTags[cellIdx].resize(numFaces, 0);
 
-            for (std::size_t faceIdx = 0; faceIdx < numFaces; ++faceIdx)
+            for (auto faceIdx = 0; faceIdx < numFaces; ++faceIdx)
             {
-                std::vector<std::size_t> key = cellFaceNodes[cellIdx][faceIdx];
+                std::vector<Index> key = cellFaceNodes[cellIdx][faceIdx];
                 std::sort(key.begin(), key.end());
 
                 const auto &sharedCells = faceToCellMap[key];
@@ -498,15 +498,15 @@ namespace fvm
                 if (sharedCells.size() == 2)
                 {
                     // Internal face
-                    std::size_t neighborIdx = (sharedCells[0] == cellIdx)
-                                                  ? sharedCells[1]
-                                                  : sharedCells[0];
-                    cellNeighbors[cellIdx][faceIdx] = static_cast<int>(neighborIdx);
+                    Index neighborIdx = (sharedCells[0] == cellIdx)
+                                            ? sharedCells[1]
+                                            : sharedCells[0];
+                    cellNeighbors[cellIdx][faceIdx] = neighborIdx;
                 }
                 else if (sharedCells.size() == 1)
                 {
                     // Boundary face
-                    std::set<std::size_t> faceKeySet(key.begin(), key.end());
+                    std::set<Index> faceKeySet(key.begin(), key.end());
                     auto it = boundaryFaceMap.find(faceKeySet);
                     if (it != boundaryFaceMap.end())
                     {
@@ -525,19 +525,19 @@ namespace fvm
     {
         cellCentroids.resize(nCells);
 
-        for (std::size_t i = 0; i < nCells; ++i)
+        for (auto i = 0; i < nCells; ++i)
         {
             const auto &conn = cellNodeConnectivity[i];
-            std::array<double, 3> centroid = {0.0, 0.0, 0.0};
+            std::array<Real, 3> centroid = {0.0, 0.0, 0.0};
 
-            for (std::size_t nodeIdx : conn)
+            for (auto nodeIdx : conn)
             {
                 centroid[0] += nodeCoords[nodeIdx][0];
                 centroid[1] += nodeCoords[nodeIdx][1];
                 centroid[2] += nodeCoords[nodeIdx][2];
             }
 
-            double n = static_cast<double>(conn.size());
+            Real n = static_cast<Real>(conn.size());
             centroid[0] /= n;
             centroid[1] /= n;
             centroid[2] /= n;
@@ -555,20 +555,20 @@ namespace fvm
         cellFaceNormals.resize(nCells);
         cellFaceAreas.resize(nCells);
 
-        for (std::size_t ci = 0; ci < nCells; ++ci)
+        for (auto ci = 0; ci < nCells; ++ci)
         {
-            std::size_t numFaces = cellFaceNodes[ci].size();
+            auto numFaces = cellFaceNodes[ci].size();
             cellFaceMidpoints[ci].resize(numFaces);
             cellFaceNormals[ci].resize(numFaces);
             cellFaceAreas[ci].resize(numFaces);
 
-            for (std::size_t fi = 0; fi < numFaces; ++fi)
+            for (auto fi = 0; fi < numFaces; ++fi)
             {
                 const auto &faceNodeIndices = cellFaceNodes[ci][fi];
                 std::vector<std::array<double, 3>> nodes;
                 nodes.reserve(faceNodeIndices.size());
 
-                for (std::size_t nodeIdx : faceNodeIndices)
+                for (auto nodeIdx : faceNodeIndices)
                 {
                     nodes.push_back(nodeCoords[nodeIdx]);
                 }
@@ -601,18 +601,18 @@ namespace fvm
         orientFaceNormals();
     }
 
-    void PolyMesh::compute2DFaceMetrics(std::size_t ci, std::size_t fi,
-                                        const std::vector<std::array<double, 3>> &nodes)
+    void PolyMesh::compute2DFaceMetrics(Index ci, Index fi,
+                                        const std::vector<std::array<Real, 3>> &nodes)
     {
         // Edge vector
-        double edgeVec[3] = {
+        Real edgeVec[3] = {
             nodes[1][0] - nodes[0][0],
             nodes[1][1] - nodes[0][1],
             nodes[1][2] - nodes[0][2]};
 
-        double length = std::sqrt(edgeVec[0] * edgeVec[0] +
-                                  edgeVec[1] * edgeVec[1] +
-                                  edgeVec[2] * edgeVec[2]);
+        Real length = std::sqrt(edgeVec[0] * edgeVec[0] +
+                                edgeVec[1] * edgeVec[1] +
+                                edgeVec[2] * edgeVec[2]);
 
         cellFaceAreas[ci][fi] = length;
 
@@ -627,33 +627,33 @@ namespace fvm
         }
     }
 
-    void PolyMesh::compute3DFaceMetrics(std::size_t ci, std::size_t fi,
-                                        const std::vector<std::array<double, 3>> &nodes)
+    void PolyMesh::compute3DFaceMetrics(Index ci, Index fi,
+                                        const std::vector<std::array<Real, 3>> &nodes)
     {
         // Compute centroid
-        std::array<double, 3> centroid = {0.0, 0.0, 0.0};
+        std::array<Real, 3> centroid = {0.0, 0.0, 0.0};
         for (const auto &node : nodes)
         {
             centroid[0] += node[0];
             centroid[1] += node[1];
             centroid[2] += node[2];
         }
-        double n = static_cast<double>(nodes.size());
+        Real n = static_cast<Real>(nodes.size());
         centroid[0] /= n;
         centroid[1] /= n;
         centroid[2] /= n;
 
         // Sum of cross products
-        std::array<double, 3> areaVec = {0.0, 0.0, 0.0};
-        std::size_t numNodes = nodes.size();
+        std::array<Real, 3> areaVec = {0.0, 0.0, 0.0};
+        auto numNodes = nodes.size();
 
-        for (std::size_t k = 0; k < numNodes; ++k)
+        for (auto k = 0; k < numNodes; ++k)
         {
             const auto &p1 = nodes[k];
             const auto &p2 = nodes[(k + 1) % numNodes];
 
-            double v1[3] = {p1[0] - centroid[0], p1[1] - centroid[1], p1[2] - centroid[2]};
-            double v2[3] = {p2[0] - centroid[0], p2[1] - centroid[1], p2[2] - centroid[2]};
+            Real v1[3] = {p1[0] - centroid[0], p1[1] - centroid[1], p1[2] - centroid[2]};
+            Real v2[3] = {p2[0] - centroid[0], p2[1] - centroid[1], p2[2] - centroid[2]};
 
             // Cross product
             areaVec[0] += v1[1] * v2[2] - v1[2] * v2[1];
@@ -665,9 +665,9 @@ namespace fvm
         areaVec[1] /= 2.0;
         areaVec[2] /= 2.0;
 
-        double area = std::sqrt(areaVec[0] * areaVec[0] +
-                                areaVec[1] * areaVec[1] +
-                                areaVec[2] * areaVec[2]);
+        Real area = std::sqrt(areaVec[0] * areaVec[0] +
+                              areaVec[1] * areaVec[1] +
+                              areaVec[2] * areaVec[2]);
 
         cellFaceAreas[ci][fi] = area;
 
@@ -685,9 +685,9 @@ namespace fvm
 
     void PolyMesh::orientFaceNormals()
     {
-        for (std::size_t ci = 0; ci < nCells; ++ci)
+        for (auto ci = 0; ci < nCells; ++ci)
         {
-            for (std::size_t fi = 0; fi < cellFaceNodes[ci].size(); ++fi)
+            for (auto fi = 0; fi < cellFaceNodes[ci].size(); ++fi)
             {
                 // Vector from cell centroid to face midpoint
                 double vecToFace[3] = {
@@ -718,12 +718,12 @@ namespace fvm
 
         faceToCentroidDistances.resize(nCells);
 
-        for (std::size_t ci = 0; ci < nCells; ++ci)
+        for (auto ci = 0; ci < nCells; ++ci)
         {
-            std::size_t numFaces = cellFaceNodes[ci].size();
+            auto numFaces = cellFaceNodes[ci].size();
             faceToCentroidDistances[ci].resize(numFaces);
 
-            for (std::size_t fi = 0; fi < numFaces; ++fi)
+            for (auto fi = 0; fi < numFaces; ++fi)
             {
                 double vec[3] = {
                     cellFaceMidpoints[ci][fi][0] - cellCentroids[ci][0],
@@ -756,14 +756,14 @@ namespace fvm
     {
         cellVolumes.resize(nCells);
 
-        for (std::size_t i = 0; i < nCells; ++i)
+        for (auto i = 0; i < nCells; ++i)
         {
             const auto &conn = cellNodeConnectivity[i];
-            std::size_t n = conn.size();
+            auto n = conn.size();
 
             // Shoelace formula for polygon area
             double area = 0.0;
-            for (std::size_t j = 0; j < n; ++j)
+            for (auto j = 0; j < n; ++j)
             {
                 const auto &p1 = nodeCoords[conn[j]];
                 const auto &p2 = nodeCoords[conn[(j + 1) % n]];
@@ -778,12 +778,12 @@ namespace fvm
         cellVolumes.resize(nCells);
 
         // Using divergence theorem: V = (1/3) * sum(face_midpoint . face_normal * face_area)
-        for (std::size_t ci = 0; ci < nCells; ++ci)
+        for (auto ci = 0; ci < nCells; ++ci)
         {
             double volume = 0.0;
-            std::size_t numFaces = cellFaceNodes[ci].size();
+            auto numFaces = cellFaceNodes[ci].size();
 
-            for (std::size_t fi = 0; fi < numFaces; ++fi)
+            for (auto fi = 0; fi < numFaces; ++fi)
             {
                 double dot = cellFaceMidpoints[ci][fi][0] * cellFaceNormals[ci][fi][0] +
                              cellFaceMidpoints[ci][fi][1] * cellFaceNormals[ci][fi][1] +
@@ -896,8 +896,8 @@ namespace fvm
         if (cellElementTypes.empty())
             return;
 
-        std::map<int, std::size_t> typeCounts;
-        for (int type : cellElementTypes)
+        std::map<Index, Index> typeCounts;
+        for (auto type : cellElementTypes)
         {
             typeCounts[type]++;
         }

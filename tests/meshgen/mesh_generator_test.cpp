@@ -35,7 +35,7 @@ namespace fvm
             }
 
             // Helper to create a simple rectangle geometry
-            int createRectangle(double length = 2.0, double width = 1.0)
+            Index createRectangle(Real length = 2.0, Real width = 1.0)
             {
                 gmsh::model::add("test");
                 Geometry geo;
@@ -43,7 +43,7 @@ namespace fvm
             }
 
             // Helper to create a simple circle geometry
-            int createCircle(double radius = 1.0)
+            Index createCircle(Real radius = 1.0)
             {
                 gmsh::model::add("test");
                 Geometry geo;
@@ -51,7 +51,7 @@ namespace fvm
             }
 
             // Helper to create a triangle geometry
-            int createTriangle()
+            Index createTriangle()
             {
                 gmsh::model::add("test");
                 Geometry geo;
@@ -121,7 +121,7 @@ namespace fvm
             const MeshInfo &data = gen.getMeshData();
 
             // All cells should be triangles (VTK type 5)
-            for (int cellType : data.elementTypes)
+            for (Index cellType : data.elementTypes)
             {
                 EXPECT_EQ(cellType, VTKCellType::TRIANGLE);
             }
@@ -193,8 +193,8 @@ namespace fvm
             const MeshInfo &data = gen.getMeshData();
 
             // Most cells should be quads (VTK type 9), some may be triangles
-            int quadCount = 0;
-            for (int cellType : data.elementTypes)
+            Index quadCount = 0;
+            for (Index cellType : data.elementTypes)
             {
                 if (cellType == VTKCellType::QUAD)
                 {
@@ -236,7 +236,7 @@ namespace fvm
             const MeshInfo &data = gen.getMeshData();
 
             // All cells should be quads for structured mesh
-            for (int cellType : data.elementTypes)
+            for (Index cellType : data.elementTypes)
             {
                 EXPECT_EQ(cellType, VTKCellType::QUAD);
             }
@@ -529,7 +529,7 @@ namespace fvm
             // Generate with larger mesh size (set via geometry characteristic length)
             gmsh::model::add("test1");
             Geometry geo1;
-            int surface1 = geo1.rectangle(2.0, 1.0, 0.0, 0.0, 0.5); // coarse: 0.5
+            Index surface1 = geo1.rectangle(2.0, 1.0, 0.0, 0.0, 0.5); // coarse: 0.5
 
             MeshGenerator gen1(surface1, testOutputDir_);
             std::map<int, MeshParams> params1;
@@ -541,7 +541,7 @@ namespace fvm
             gmsh::clear();
             gmsh::model::add("test2");
             Geometry geo2;
-            int surface2 = geo2.rectangle(2.0, 1.0, 0.0, 0.0, 0.1); // fine: 0.1
+            Index surface2 = geo2.rectangle(2.0, 1.0, 0.0, 0.0, 0.1); // fine: 0.1
 
             MeshGenerator gen2(surface2, testOutputDir_);
             std::map<int, MeshParams> params2;

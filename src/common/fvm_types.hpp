@@ -34,10 +34,10 @@ namespace fvm
     using BoundingBox = std::array<Real, 6>;
 
     /// Cell connectivity (variable number of nodes)
-    using CellConnectivity = std::vector<Id>;
+    using CellConnectivity = std::vector<Index>;
 
     /// A face defined by its node indices (variable size: 3 for tri, 4 for quad, etc.)
-    using FaceNodes = std::vector<Id>;
+    using FaceNodes = std::vector<Index>;
 
     // =============================================================================
     // Mesh Interchange Data Structure
@@ -51,11 +51,11 @@ namespace fvm
 
         // === Topology ===
         std::vector<CellConnectivity> elements;
-        std::vector<Sid> elementTypes; // VTK cell types (-1 if unknown)
+        std::vector<Index> elementTypes; // VTK cell types (-1 if unknown)
 
         // === Named Sets ===
-        std::unordered_map<std::string, std::vector<Id>> nodeSets;
-        std::unordered_map<std::string, std::vector<Id>> elementSets;
+        std::unordered_map<std::string, std::vector<Index>> nodeSets;
+        std::unordered_map<std::string, std::vector<Index>> elementSets;
         std::unordered_map<std::string, std::vector<FaceNodes>> faceSets; // boundary groups go here
     };
 

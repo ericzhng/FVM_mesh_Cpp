@@ -45,34 +45,34 @@ namespace fvm
         // Initialize local-to-global cell mapping
         // Owned cells come first, followed by halo cells
         localMesh.l2gCells.reserve(localMesh.numOwnedCells + localMesh.numHaloCells);
-        for (std::size_t g : haloInfo.ownedCells)
+        for (auto g : haloInfo.ownedCells)
         {
             localMesh.l2gCells.push_back(g);
         }
-        for (std::size_t g : haloInfo.haloCells)
+        for (auto g : haloInfo.haloCells)
         {
             localMesh.l2gCells.push_back(g);
         }
 
         // Build global-to-local cell mapping
-        for (std::size_t l = 0; l < localMesh.l2gCells.size(); ++l)
+        for (auto l = 0; l < localMesh.l2gCells.size(); ++l)
         {
             localMesh.g2lCells[localMesh.l2gCells[l]] = l;
         }
 
         // Initialize node mappings
         // Collect all unique nodes from local cells
-        std::set<std::size_t> uniqueNodesG;
-        for (std::size_t g : localMesh.l2gCells)
+        std::set<Index> uniqueNodesG;
+        for (auto g : localMesh.l2gCells)
         {
-            for (std::size_t nodeG : globalMesh.cellNodeConnectivity[g])
+            for (auto nodeG : globalMesh.cellNodeConnectivity[g])
             {
                 uniqueNodesG.insert(nodeG);
             }
         }
 
         localMesh.l2gNodes.assign(uniqueNodesG.begin(), uniqueNodesG.end());
-        for (std::size_t l = 0; l < localMesh.l2gNodes.size(); ++l)
+        for (auto l = 0; l < localMesh.l2gNodes.size(); ++l)
         {
             localMesh.g2lNodes[localMesh.l2gNodes[l]] = l;
         }
@@ -102,20 +102,20 @@ namespace fvm
 
         // Copy node coordinates using local-to-global mapping
         nodeCoords.resize(nNodes);
-        for (std::size_t l = 0; l < nNodes; ++l)
+        for (auto l = 0; l < nNodes; ++l)
         {
             nodeCoords[l] = globalMesh.nodeCoords[l2gNodes[l]];
         }
 
         // Remap cell connectivity from global to local node indices
         cellNodeConnectivity.resize(nCells);
-        for (std::size_t l = 0; l < nCells; ++l)
+        for (auto l = 0; l < nCells; ++l)
         {
-            std::size_t g = l2gCells[l];
+            auto g = l2gCells[l];
             const auto &globalConn = globalMesh.cellNodeConnectivity[g];
 
             cellNodeConnectivity[l].reserve(globalConn.size());
-            for (std::size_t nodeG : globalConn)
+            for (auto nodeG : globalConn)
             {
                 auto it = g2lNodes.find(nodeG);
                 if (it == g2lNodes.end())
@@ -132,7 +132,7 @@ namespace fvm
         if (!globalMesh.cellElementTypes.empty())
         {
             cellElementTypes.resize(nCells);
-            for (std::size_t l = 0; l < nCells; ++l)
+            for (auto l = 0; l < nCells; ++l)
             {
                 cellElementTypes[l] = globalMesh.cellElementTypes[l2gCells[l]];
             }
@@ -144,17 +144,17 @@ namespace fvm
 
     void LocalMesh::populateBoundaryFaces(const PolyMesh &globalMesh)
     {
-        std::vector<std::vector<std::size_t>> localBoundaryFaceNodes;
-        std::vector<int> localBoundaryFaceTags;
+        std::vector<std::vector<Index>> localBoundaryFaceNodes;
+        std::vector<Index> localBoundaryFaceTags;
 
         // Iterate through global boundary faces
-        for (std::size_t i = 0; i < globalMesh.boundaryFaceNodes.size(); ++i)
+        for (auto i = 0; i < globalMesh.boundaryFaceNodes.size(); ++i)
         {
             const auto &faceNodesG = globalMesh.boundaryFaceNodes[i];
 
             // Check if all nodes of this face are in our local mesh
             bool allNodesLocal = true;
-            for (std::size_t nodeG : faceNodesG)
+            for (auto nodeG : faceNodesG)
             {
                 if (g2lNodes.find(nodeG) == g2lNodes.end())
                 {
@@ -166,9 +166,9 @@ namespace fvm
             if (allNodesLocal)
             {
                 // Remap face nodes to local indices
-                std::vector<std::size_t> faceNodesL;
+                std::vector<Index> faceNodesL;
                 faceNodesL.reserve(faceNodesG.size());
-                for (std::size_t nodeG : faceNodesG)
+                for (auto nodeG : faceNodesG)
                 {
                     faceNodesL.push_back(g2lNodes[nodeG]);
                 }
@@ -237,7 +237,7 @@ namespace fvm
         }
 
         // Store old l2g mapping for remapping communication maps
-        std::vector<std::size_t> oldL2gCells = l2gCells;
+        std::vector<Index> oldL2gCells = l2gCells;
 
         // Reorder cells (only owned cells, halo stays at end)
         renumberCells(*this, strategy, numOwnedCells);
@@ -267,7 +267,7 @@ namespace fvm
 
         // Use original connectivity for owned cells
         tempMesh.cellNodeConnectivity.reserve(numOwnedCells);
-        for (std::size_t i = 0; i < numOwnedCells; ++i)
+        for (auto i = 0; i < numOwnedCells; ++i)
         {
             tempMesh.cellNodeConnectivity.push_back(
                 originalCellNodeConnectivity_.empty()
@@ -279,7 +279,7 @@ namespace fvm
         if (!cellCentroids.empty() && cellCentroids.size() >= numOwnedCells)
         {
             tempMesh.cellCentroids.resize(numOwnedCells);
-            for (std::size_t i = 0; i < numOwnedCells; ++i)
+            for (auto i = 0; i < numOwnedCells; ++i)
             {
                 tempMesh.cellCentroids[i] = cellCentroids[i];
             }
@@ -289,14 +289,14 @@ namespace fvm
 
         // newOrder[newIdx] = oldIdx within owned cells
         // Update l2gCells for owned cells
-        std::vector<std::size_t> newL2gCells(nCells);
-        for (std::size_t newIdx = 0; newIdx < numOwnedCells; ++newIdx)
+        std::vector<Index> newL2gCells(nCells);
+        for (auto newIdx = 0; newIdx < numOwnedCells; ++newIdx)
         {
-            std::size_t oldIdx = newOrder[newIdx];
+            auto oldIdx = newOrder[newIdx];
             newL2gCells[newIdx] = oldL2gCells[oldIdx];
         }
         // Keep halo cells unchanged
-        for (std::size_t i = numOwnedCells; i < nCells; ++i)
+        for (auto i = numOwnedCells; i < nCells; ++i)
         {
             newL2gCells[i] = oldL2gCells[i];
         }
@@ -305,34 +305,34 @@ namespace fvm
 
         // Rebuild g2l mapping
         g2lCells.clear();
-        for (std::size_t l = 0; l < l2gCells.size(); ++l)
+        for (auto l = 0; l < l2gCells.size(); ++l)
         {
             g2lCells[l2gCells[l]] = l;
         }
 
         // Remap send/recv maps to use new local indices
         // Build old-to-new local index mapping
-        std::unordered_map<std::size_t, std::size_t> oldToNew;
-        for (std::size_t newIdx = 0; newIdx < numOwnedCells; ++newIdx)
+        std::unordered_map<Index, Index> oldToNew;
+        for (auto newIdx = 0; newIdx < numOwnedCells; ++newIdx)
         {
-            std::size_t oldIdx = newOrder[newIdx];
+            auto oldIdx = newOrder[newIdx];
             oldToNew[oldIdx] = newIdx;
         }
-        for (std::size_t i = numOwnedCells; i < nCells; ++i)
+        for (auto i = numOwnedCells; i < nCells; ++i)
         {
             oldToNew[i] = i; // Halo cells unchanged
         }
 
         for (auto &[neighborRank, indices] : sendMap)
         {
-            for (std::size_t &idx : indices)
+            for (auto &idx : indices)
             {
                 idx = oldToNew[idx];
             }
         }
         for (auto &[neighborRank, indices] : recvMap)
         {
-            for (std::size_t &idx : indices)
+            for (auto &idx : indices)
             {
                 idx = oldToNew[idx];
             }
@@ -352,7 +352,7 @@ namespace fvm
         }
 
         // Store old l2g mapping
-        std::vector<std::size_t> oldL2gNodes = l2gNodes;
+        std::vector<Index> oldL2gNodes = l2gNodes;
 
         // Reorder nodes
         renumberNodes(*this, strategy);
@@ -369,14 +369,14 @@ namespace fvm
 
         // For simplicity, we'll recompute l2gNodes based on the strategy
         SparseMatrix adj = buildNodeAdjacency(*this);
-        std::vector<std::size_t> newOrder;
+        std::vector<Index> newOrder;
 
         if (strategy == "rcm")
         {
             // Find starting node with minimum degree
-            std::size_t startNode = 0;
-            std::size_t minDegree = std::numeric_limits<std::size_t>::max();
-            for (std::size_t i = 0; i < nNodes; ++i)
+            Index startNode = 0;
+            Index minDegree = std::numeric_limits<Index>::max();
+            for (auto i = 0; i < nNodes; ++i)
             {
                 if (adj.degree(i) < minDegree)
                 {
@@ -388,7 +388,7 @@ namespace fvm
             // BFS
             newOrder.reserve(nNodes);
             std::vector<bool> visited(nNodes, false);
-            std::queue<std::size_t> queue;
+            std::queue<Index> queue;
             queue.push(startNode);
             visited[startNode] = true;
 
@@ -396,20 +396,20 @@ namespace fvm
             {
                 while (!queue.empty())
                 {
-                    std::size_t current = queue.front();
+                    auto current = queue.front();
                     queue.pop();
                     newOrder.push_back(current);
 
                     auto [begin, end] = adj.neighbors(current);
-                    std::vector<std::size_t> neighbors(begin, end);
+                    std::vector<Index> neighbors(begin, end);
 
                     std::sort(neighbors.begin(), neighbors.end(),
-                              [&adj](std::size_t a, std::size_t b)
+                              [&adj](Index a, Index b)
                               {
                                   return adj.degree(a) < adj.degree(b);
                               });
 
-                    for (std::size_t neighbor : neighbors)
+                    for (auto neighbor : neighbors)
                     {
                         if (!visited[neighbor])
                         {
@@ -421,7 +421,7 @@ namespace fvm
 
                 if (newOrder.size() < nNodes)
                 {
-                    for (std::size_t i = 0; i < nNodes; ++i)
+                    for (auto i = 0; i < nNodes; ++i)
                     {
                         if (!visited[i])
                         {
@@ -443,8 +443,8 @@ namespace fvm
         }
 
         // Update l2gNodes
-        std::vector<std::size_t> newL2gNodes(nNodes);
-        for (std::size_t newIdx = 0; newIdx < nNodes; ++newIdx)
+        std::vector<Index> newL2gNodes(nNodes);
+        for (auto newIdx = 0; newIdx < nNodes; ++newIdx)
         {
             newL2gNodes[newIdx] = oldL2gNodes[newOrder[newIdx]];
         }
@@ -452,7 +452,7 @@ namespace fvm
 
         // Rebuild g2l mapping
         g2lNodes.clear();
-        for (std::size_t l = 0; l < l2gNodes.size(); ++l)
+        for (auto l = 0; l < l2gNodes.size(); ++l)
         {
             g2lNodes[l2gNodes[l]] = l;
         }

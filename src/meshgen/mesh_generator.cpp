@@ -34,7 +34,7 @@ namespace fvm
                                  const std::string &filename)
     {
         // Apply mesh parameters for each surface
-        for (int surfaceTag : surfaceTags_)
+        for (auto surfaceTag : surfaceTags_)
         {
             auto it = meshParams.find(surfaceTag);
             if (it != meshParams.end())
@@ -97,8 +97,8 @@ namespace fvm
 
         double dx = maxX - minX;
         double dy = maxY - minY;
-        int nx = static_cast<int>(dx / charLength);
-        int ny = static_cast<int>(dy / charLength);
+        auto nx = static_cast<int>(dx / charLength);
+        auto ny = static_cast<int>(dy / charLength);
 
         // Classify curves and set transfinite
         auto [hCurves, vCurves] = classifyBoundaryCurves(boundaryCurves);
@@ -117,7 +117,6 @@ namespace fvm
     MeshGenerator::classifyBoundaryCurves(
         const std::vector<std::pair<int, int>> &boundaryCurves) const
     {
-
         std::vector<int> hCurves, vCurves;
 
         for (const auto &dimTag : boundaryCurves)
@@ -157,7 +156,7 @@ namespace fvm
     {
         // Collect all boundary curves
         std::set<int> allBoundaryCurves;
-        for (int surfaceTag : surfaceTags_)
+        for (auto surfaceTag : surfaceTags_)
         {
             std::vector<std::pair<int, int>> boundary;
             gmsh::model::getBoundary({{2, surfaceTag}}, boundary, false, false, false);
@@ -176,7 +175,7 @@ namespace fvm
         {
             std::vector<int> entities;
             gmsh::model::getEntitiesForPhysicalGroup(dim, tag, entities);
-            for (int e : entities)
+            for (auto e : entities)
             {
                 curvesInGroups.insert(e);
             }
@@ -184,7 +183,7 @@ namespace fvm
 
         // Add untagged curves to "unnamed" group
         std::vector<int> untaggedCurves;
-        for (int curve : allBoundaryCurves)
+        for (auto curve : allBoundaryCurves)
         {
             if (curvesInGroups.find(curve) == curvesInGroups.end())
             {
@@ -204,7 +203,7 @@ namespace fvm
         {
             std::vector<int> entities;
             gmsh::model::getEntitiesForPhysicalGroup(dim, tag, entities);
-            for (int e : entities)
+            for (auto e : entities)
             {
                 surfacesInGroups.insert(e);
             }
@@ -212,7 +211,7 @@ namespace fvm
 
         // Add untagged surfaces to "fluid" group
         std::vector<int> untaggedSurfaces;
-        for (int surface : surfaceTags_)
+        for (auto surface : surfaceTags_)
         {
             if (surfacesInGroups.find(surface) == surfacesInGroups.end())
             {
@@ -253,7 +252,7 @@ namespace fvm
         meshData_.nodes.reserve(nodeTags.size());
         nodeIds_.reserve(nodeTags.size());
 
-        for (std::size_t i = 0; i < nodeTags.size(); ++i)
+        for (auto i = 0; i < nodeTags.size(); ++i)
         {
             nodeIds_.push_back(nodeTags[i]);
             meshData_.nodes.push_back({nodeCoords[3 * i],
@@ -266,7 +265,7 @@ namespace fvm
     {
         // Create node tag to index map
         std::unordered_map<std::size_t, std::size_t> nodeMap;
-        for (std::size_t i = 0; i < nodeIds_.size(); ++i)
+        for (auto i = 0; i < nodeIds_.size(); ++i)
         {
             nodeMap[nodeIds_[i]] = i;
         }
@@ -274,7 +273,7 @@ namespace fvm
         meshData_.elements.clear();
         meshData_.elementTypes.clear();
 
-        for (int surfaceTag : surfaceTags_)
+        for (auto surfaceTag : surfaceTags_)
         {
             std::vector<int> elemTypes;
             std::vector<std::vector<std::size_t>> elemTags;
@@ -282,9 +281,9 @@ namespace fvm
 
             gmsh::model::mesh::getElements(elemTypes, elemTags, elemNodeTags, 2, surfaceTag);
 
-            for (std::size_t i = 0; i < elemTypes.size(); ++i)
+            for (auto i = 0; i < elemTypes.size(); ++i)
             {
-                int elemType = elemTypes[i];
+                auto elemType = elemTypes[i];
 
                 // Get element properties
                 std::string name;
@@ -293,17 +292,17 @@ namespace fvm
                 gmsh::model::mesh::getElementProperties(
                     elemType, name, dim, order, numNodes, localNodeCoords, numPrimaryNodes);
 
-                std::size_t numElements = elemTags[i].size();
+                auto numElements = elemTags[i].size();
                 const auto &allNodeTags = elemNodeTags[i];
 
-                for (std::size_t j = 0; j < numElements; ++j)
+                for (auto j = 0; j < numElements; ++j)
                 {
                     CellConnectivity cell;
                     cell.reserve(numNodes);
 
-                    for (int k = 0; k < numNodes; ++k)
+                    for (auto k = 0; k < numNodes; ++k)
                     {
-                        std::size_t nodeTag = allNodeTags[j * numNodes + k];
+                        auto nodeTag = allNodeTags[j * numNodes + k];
                         cell.push_back(nodeMap[nodeTag]);
                     }
 
@@ -322,7 +321,7 @@ namespace fvm
 
         // Create node tag to index map
         std::unordered_map<std::size_t, std::size_t> nodeMap;
-        for (std::size_t i = 0; i < nodeIds_.size(); ++i)
+        for (auto i = 0; i < nodeIds_.size(); ++i)
         {
             nodeMap[nodeIds_[i]] = i;
         }
@@ -346,7 +345,7 @@ namespace fvm
             {
                 // Boundary curves -> face sets (edges in 2D)
                 std::vector<FaceNodes> faces;
-                for (int entityTag : entities)
+                for (auto entityTag : entities)
                 {
                     std::vector<int> elemTypes;
                     std::vector<std::vector<std::size_t>> elemTags;
@@ -354,13 +353,13 @@ namespace fvm
 
                     gmsh::model::mesh::getElements(elemTypes, elemTags, elemNodeTags, 1, entityTag);
 
-                    for (std::size_t i = 0; i < elemTypes.size(); ++i)
+                    for (auto i = 0; i < elemTypes.size(); ++i)
                     {
                         const auto &nodeTags = elemNodeTags[i];
                         // Line elements have 2 nodes
-                        for (std::size_t j = 0; j + 1 < nodeTags.size(); j += 2)
+                        for (auto j = 0; j + 1 < nodeTags.size(); j += 2)
                         {
-                            FaceNodes face = {nodeMap[nodeTags[j]], nodeMap[nodeTags[j + 1]]};
+                            FaceNodes face = {static_cast<Index>(nodeMap[nodeTags[j]]), static_cast<Index>(nodeMap[nodeTags[j + 1]])};
                             faces.push_back(face);
                         }
                     }
@@ -370,12 +369,12 @@ namespace fvm
             else if (dim == 2)
             {
                 // Surface groups -> element sets
-                std::vector<std::size_t> elementIndices;
+                std::vector<Index> elementIndices;
                 // Note: For simplicity, we store entity tags; proper implementation
                 // would map surface elements to their indices
-                for (int entityTag : entities)
+                for (auto entityTag : entities)
                 {
-                    elementIndices.push_back(static_cast<std::size_t>(entityTag));
+                    elementIndices.push_back(static_cast<Index>(entityTag));
                 }
                 meshData_.elementSets[name] = std::move(elementIndices);
             }

@@ -1,8 +1,11 @@
 #include <gtest/gtest.h>
 #include "vtkio/vtk_reader.hpp"
 #include "vtkio/vtk_writer.hpp"
+#include <filesystem>
 #include <fstream>
 #include <cstdio>
+
+namespace fs = std::filesystem;
 
 // Simple test that doesn't use std::filesystem
 TEST(VTKReaderBasic, CanCreateReader)
@@ -24,7 +27,8 @@ TEST(VTKReaderBasic, UnsupportedFormatThrows)
 // Test reading actual files - only if they exist
 TEST(VTKReaderFile, ReadVTKFile)
 {
-    const char *testFile = "data/sample_rect_mesh.vtk";
+    fs::path testFile = fs::path(TEST_DATA_DIR) / "sample_rect_mesh.vtk";
+
     std::ifstream f(testFile);
     if (!f.good())
     {
@@ -32,7 +36,7 @@ TEST(VTKReaderFile, ReadVTKFile)
     }
     f.close();
 
-    auto mesh = fvm::VTKReader::readVTK(testFile);
+    auto mesh = fvm::VTKReader::readVTK(testFile.string());
     EXPECT_GT(mesh.nodes.size(), 0u);
     EXPECT_GT(mesh.elements.size(), 0u);
     EXPECT_EQ(mesh.elements.size(), mesh.elementTypes.size());
@@ -40,7 +44,8 @@ TEST(VTKReaderFile, ReadVTKFile)
 
 TEST(VTKReaderFile, ReadVTUFile)
 {
-    const char *testFile = "data/sample_rect_mesh.vtu";
+    fs::path testFile = fs::path(TEST_DATA_DIR) / "sample_rect_mesh.vtu";
+
     std::ifstream f(testFile);
     if (!f.good())
     {
@@ -48,7 +53,7 @@ TEST(VTKReaderFile, ReadVTUFile)
     }
     f.close();
 
-    auto mesh = fvm::VTKReader::readVTU(testFile);
+    auto mesh = fvm::VTKReader::readVTU(testFile.string());
     EXPECT_GT(mesh.nodes.size(), 0u);
     EXPECT_GT(mesh.elements.size(), 0u);
     EXPECT_EQ(mesh.elements.size(), mesh.elementTypes.size());
@@ -56,7 +61,8 @@ TEST(VTKReaderFile, ReadVTUFile)
 
 TEST(VTKReaderFile, RoundTripVTK)
 {
-    const char *testFile = "data/sample_rect_mesh.vtk";
+    fs::path testFile = fs::path(TEST_DATA_DIR) / "sample_rect_mesh.vtk";
+
     std::ifstream f(testFile);
     if (!f.good())
     {
@@ -65,14 +71,14 @@ TEST(VTKReaderFile, RoundTripVTK)
     f.close();
 
     // Read original
-    auto mesh1 = fvm::VTKReader::readVTK(testFile);
+    auto mesh1 = fvm::VTKReader::readVTK(testFile.string());
 
     // Write to temp file
-    const char *tempFile = "data/test_roundtrip_temp.vtk";
-    fvm::VTKWriter::writeVTK(mesh1, tempFile);
+    fs::path tempFile = fs::path(TEST_DATA_DIR) / "test_roundtrip_temp.vtk";
+    fvm::VTKWriter::writeVTK(mesh1, tempFile.string());
 
     // Read back
-    auto mesh2 = fvm::VTKReader::readVTK(tempFile);
+    auto mesh2 = fvm::VTKReader::readVTK(tempFile.string());
 
     // Compare
     EXPECT_EQ(mesh1.nodes.size(), mesh2.nodes.size());
@@ -86,14 +92,12 @@ TEST(VTKReaderFile, RoundTripVTK)
         EXPECT_NEAR(mesh1.nodes[i][1], mesh2.nodes[i][1], 1e-6);
         EXPECT_NEAR(mesh1.nodes[i][2], mesh2.nodes[i][2], 1e-6);
     }
-
-    // Cleanup
-    std::remove(tempFile);
 }
 
 TEST(VTKReaderFile, RoundTripVTU)
 {
-    const char *testFile = "data/sample_rect_mesh.vtu";
+    fs::path testFile = fs::path(TEST_DATA_DIR) / "sample_rect_mesh.vtu";
+
     std::ifstream f(testFile);
     if (!f.good())
     {
@@ -102,19 +106,16 @@ TEST(VTKReaderFile, RoundTripVTU)
     f.close();
 
     // Read original
-    auto mesh1 = fvm::VTKReader::readVTU(testFile);
+    auto mesh1 = fvm::VTKReader::readVTU(testFile.string());
 
     // Write to temp file
-    const char *tempFile = "data/test_roundtrip_temp.vtu";
-    fvm::VTKWriter::writeVTU(mesh1, tempFile);
+    fs::path tempFile = fs::path(TEST_DATA_DIR) / "test_roundtrip_temp.vtu";
+    fvm::VTKWriter::writeVTU(mesh1, tempFile.string());
 
     // Read back
-    auto mesh2 = fvm::VTKReader::readVTU(tempFile);
+    auto mesh2 = fvm::VTKReader::readVTU(tempFile.string());
 
     // Compare
     EXPECT_EQ(mesh1.nodes.size(), mesh2.nodes.size());
     EXPECT_EQ(mesh1.elements.size(), mesh2.elements.size());
-
-    // Cleanup
-    std::remove(tempFile);
 }

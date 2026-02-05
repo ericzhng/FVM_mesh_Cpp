@@ -188,7 +188,8 @@ void writePartitionMetadata(const fvm::LocalMesh &localMesh, const std::string &
     ofs << "  \"l2gCells\": [";
     for (size_t i = 0; i < localMesh.l2gCells.size(); ++i)
     {
-        if (i > 0) ofs << ", ";
+        if (i > 0)
+            ofs << ", ";
         ofs << localMesh.l2gCells[i];
     }
     ofs << "],\n";
@@ -197,7 +198,8 @@ void writePartitionMetadata(const fvm::LocalMesh &localMesh, const std::string &
     ofs << "  \"l2gNodes\": [";
     for (size_t i = 0; i < localMesh.l2gNodes.size(); ++i)
     {
-        if (i > 0) ofs << ", ";
+        if (i > 0)
+            ofs << ", ";
         ofs << localMesh.l2gNodes[i];
     }
     ofs << "],\n";
@@ -208,12 +210,14 @@ void writePartitionMetadata(const fvm::LocalMesh &localMesh, const std::string &
         bool firstRank = true;
         for (const auto &[neighborRank, cellIndices] : localMesh.sendMap)
         {
-            if (!firstRank) ofs << ",\n";
+            if (!firstRank)
+                ofs << ",\n";
             firstRank = false;
             ofs << "    \"" << neighborRank << "\": [";
             for (size_t i = 0; i < cellIndices.size(); ++i)
             {
-                if (i > 0) ofs << ", ";
+                if (i > 0)
+                    ofs << ", ";
                 ofs << cellIndices[i];
             }
             ofs << "]";
@@ -227,12 +231,14 @@ void writePartitionMetadata(const fvm::LocalMesh &localMesh, const std::string &
         bool firstRank = true;
         for (const auto &[neighborRank, cellIndices] : localMesh.recvMap)
         {
-            if (!firstRank) ofs << ",\n";
+            if (!firstRank)
+                ofs << ",\n";
             firstRank = false;
             ofs << "    \"" << neighborRank << "\": [";
             for (size_t i = 0; i < cellIndices.size(); ++i)
             {
-                if (i > 0) ofs << ", ";
+                if (i > 0)
+                    ofs << ", ";
                 ofs << cellIndices[i];
             }
             ofs << "]";

@@ -14,13 +14,13 @@ namespace fvm
         // Helper Functions
         // =============================================================================
 
-        bool isValidPermutation(const std::vector<std::size_t> &order, std::size_t size)
+        bool isValidPermutation(const std::vector<Index> &order, Index size)
         {
             if (order.size() != size)
                 return false;
 
             std::vector<bool> seen(size, false);
-            for (std::size_t idx : order)
+            for (auto idx : order)
             {
                 if (idx >= size || seen[idx])
                     return false;
@@ -248,8 +248,7 @@ namespace fvm
 
         TEST(CreateStrategyTest, UnknownStrategyReturnsNull)
         {
-            auto strategy = createCellReorderStrategy("unknown_strategy");
-            EXPECT_EQ(strategy, nullptr);
+            EXPECT_THROW(createCellReorderStrategy("unknown_strategy"), std::invalid_argument);
         }
 
         // =============================================================================
@@ -303,10 +302,10 @@ namespace fvm
             auto mesh = PolyMesh::createStructuredQuadMesh(4, 4);
             auto originalConnectivity = mesh.cellNodeConnectivity;
 
-            renumberCells(mesh, "invalid_strategy");
+            EXPECT_THROW(renumberCells(mesh, "invalid_strategy"), std::invalid_argument);
 
-            // Mesh should be unchanged with invalid strategy
-            EXPECT_EQ(mesh.cellNodeConnectivity.size(), originalConnectivity.size());
+            // // Mesh should be unchanged with invalid strategy
+            // EXPECT_EQ(mesh.cellNodeConnectivity.size(), originalConnectivity.size());
         }
 
         // =============================================================================

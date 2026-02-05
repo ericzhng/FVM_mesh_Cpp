@@ -102,11 +102,11 @@ namespace fvm
         /// Parse string to MeshType
         inline std::string stringToMeshType(const std::string &str)
         {
-            if (str == "tri" || str == "triangles")
+            if (str == "tri" || str == "triangle" || str == "triangles")
                 return "tri";
-            if (str == "quads" || str == "quad")
+            if (str == "quad" || str == "quads" || str == "quadrilateral")
                 return "quad";
-            if (str == "structured")
+            if (str == "structured" || str == "structure")
                 return "structured";
             return "tri"; // default
         }
@@ -116,7 +116,10 @@ namespace fvm
         {
             MeshConfig mesh;
 
-            mesh.meshType = getWithDefault<std::string>(node, "type", "triangles");
+            std::string typeValue = getWithDefault<std::string>(node, "type", "triangles");
+
+            mesh.meshType = stringToMeshType(typeValue);
+
             mesh.meshSize = getWithDefault<double>(node, "meshSize", 0.05);
             mesh.charLength = getWithDefault<double>(node, "charLength", 0.01);
 

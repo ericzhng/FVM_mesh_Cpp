@@ -17,88 +17,86 @@
 #include <string>
 #include <vector>
 
-namespace fvm {
+namespace fvm
+{
 
-// Forward declaration
-class PolyMesh;
+    // Forward declaration
+    class PolyMesh;
 
-/**
- * @brief Partitions mesh elements into a specified number of parts.
- *
- * This function supports different partitioning methods, including METIS
- * and a simple hierarchical coordinate bisection method.
- *
- * @param mesh The mesh object to partition (must be analyzed)
- * @param nParts The number of partitions
- * @param method The partitioning method: "metis" or "hierarchical"
- * @param cellWeights Optional weights for each cell (empty for uniform)
- * @return A vector of partition IDs for each cell
- * @throws std::runtime_error if partitioning fails
- */
-FVM_API std::vector<int> partitionMesh(
-    const PolyMesh& mesh,
-    int nParts,
-    const std::string& method = "metis",
-    const std::vector<double>& cellWeights = {}
-);
+    /**
+     * @brief Partitions mesh elements into a specified number of parts.
+     *
+     * This function supports different partitioning methods, including METIS
+     * and a simple hierarchical coordinate bisection method.
+     *
+     * @param mesh The mesh object to partition (must be analyzed)
+     * @param nParts The number of partitions
+     * @param method The partitioning method: "metis" or "hierarchical"
+     * @param cellWeights Optional weights for each cell (empty for uniform)
+     * @return A vector of partition IDs for each cell
+     * @throws std::runtime_error if partitioning fails
+     */
+    FVM_API std::vector<Index> partitionMesh(
+        const PolyMesh &mesh,
+        Index nParts,
+        const std::string &method = "metis",
+        const std::vector<Real> &cellWeights = {});
 
-/**
- * @brief Partitions the mesh using the METIS library.
- *
- * Uses METIS_PartGraphKway for graph-based partitioning to minimize
- * edge cuts between partitions.
- *
- * @param mesh The mesh object to partition
- * @param nParts The number of partitions
- * @param cellWeights Optional cell weights
- * @return A vector of partition IDs for each cell
- * @throws std::runtime_error if METIS is not available or fails
- */
-FVM_API std::vector<int> partitionWithMetis(
-    const PolyMesh& mesh,
-    int nParts,
-    const std::vector<double>& cellWeights = {}
-);
+    /**
+     * @brief Partitions the mesh using the METIS library.
+     *
+     * Uses METIS_PartGraphKway for graph-based partitioning to minimize
+     * edge cuts between partitions.
+     *
+     * @param mesh The mesh object to partition
+     * @param nParts The number of partitions
+     * @param cellWeights Optional cell weights
+     * @return A vector of partition IDs for each cell
+     * @throws std::runtime_error if METIS is not available or fails
+     */
+    FVM_API std::vector<Index> partitionWithMetis(
+        const PolyMesh &mesh,
+        Index nParts,
+        const std::vector<Real> &cellWeights = {});
 
-/**
- * @brief Partitions the mesh using hierarchical coordinate bisection.
- *
- * Recursively bisects the mesh along the longest dimension until the
- * desired number of partitions is reached. Works best with power-of-two
- * partition counts.
- *
- * @param mesh The mesh object to partition
- * @param nParts The number of partitions
- * @param cellWeights Optional cell weights
- * @return A vector of partition IDs for each cell
- */
-FVM_API std::vector<int> partitionWithHierarchical(
-    const PolyMesh& mesh,
-    int nParts,
-    const std::vector<double>& cellWeights = {}
-);
+    /**
+     * @brief Partitions the mesh using hierarchical coordinate bisection.
+     *
+     * Recursively bisects the mesh along the longest dimension until the
+     * desired number of partitions is reached. Works best with power-of-two
+     * partition counts.
+     *
+     * @param mesh The mesh object to partition
+     * @param nParts The number of partitions
+     * @param cellWeights Optional cell weights
+     * @return A vector of partition IDs for each cell
+     */
+    FVM_API std::vector<Index> partitionWithHierarchical(
+        const PolyMesh &mesh,
+        Index nParts,
+        const std::vector<Real> &cellWeights = {});
 
-/**
- * @brief Prints a summary of the cell distribution across partitions.
- * @param parts The partition assignment vector
- */
-FVM_API void printPartitionSummary(const std::vector<int>& parts);
+    /**
+     * @brief Prints a summary of the cell distribution across partitions.
+     * @param parts The partition assignment vector
+     */
+    FVM_API void printPartitionSummary(const std::vector<Index> &parts);
 
-/**
- * @brief Computes the adjacency list for mesh cells.
- *
- * Extracts the cell-to-cell connectivity from the mesh for use in
- * graph partitioning.
- *
- * @param mesh The mesh object
- * @return A vector of neighbor lists for each cell
- */
-FVM_API std::vector<std::vector<int>> getAdjacencyList(const PolyMesh& mesh);
+    /**
+     * @brief Computes the adjacency list for mesh cells.
+     *
+     * Extracts the cell-to-cell connectivity from the mesh for use in
+     * graph partitioning.
+     *
+     * @param mesh The mesh object
+     * @return A vector of neighbor lists for each cell
+     */
+    FVM_API std::vector<std::vector<Index>> getAdjacencyList(const PolyMesh &mesh);
 
-/**
- * @brief Checks if METIS library is available.
- * @return true if METIS can be used
- */
-FVM_API bool isMetisAvailable();
+    /**
+     * @brief Checks if METIS library is available.
+     * @return true if METIS can be used
+     */
+    FVM_API bool isMetisAvailable();
 
-}  // namespace fvm
+} // namespace fvm
