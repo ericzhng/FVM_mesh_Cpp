@@ -21,10 +21,21 @@ mesh:
 # For a circle, all edges are on the outer boundary
 boundaries:
   - name: outer_wall
-    expr: "X^2 + Y^2 >= 0.95"  # Near the radius of 1.0
+    expr: "X^2 + Y^2 >= 0.95" # Near the radius of 1.0
+
+# Global reordering (applied to full mesh before partitioning)
+reorder:
+  cellStrategy: rcm
+  nodeStrategy: rcm
 
 partition:
   enabled: false
+  numParts: 2
+  method: hierarchical
+  # Per-partition reordering (applied within each partition)
+  reorder:
+    cellStrategy: rcm
+    nodeStrategy: rcm
 
 output:
   directory: output/circle
@@ -32,3 +43,5 @@ output:
   formats:
     - vtu
   writeBoundaryInfo: true
+  writePartitionMetadata: true
+  writeQualityReport: true

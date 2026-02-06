@@ -29,14 +29,19 @@ boundaries:
   - name: bottom_wall
     expr: "Y == 0"
 
+# Global reordering (applied to full mesh before partitioning)
+reorder:
+  cellStrategy: rcm
+  nodeStrategy: rcm
+
 partition:
   enabled: true
   numParts: 4
   method: metis
-
-reorder:
-  cellStrategy: rcm
-  nodeStrategy: rcm
+  # Per-partition reordering (applied within each partition after partitioning)
+  reorder:
+    cellStrategy: rcm
+    nodeStrategy: rcm
 
 output:
   directory: output/channel
@@ -46,3 +51,4 @@ output:
     - openfoam
   writeBoundaryInfo: true
   writePartitionMetadata: true
+  writeQualityReport: true
