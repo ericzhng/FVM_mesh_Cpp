@@ -19,7 +19,6 @@
 
 namespace fvm
 {
-
     // Forward declaration
     class PolyMesh;
 

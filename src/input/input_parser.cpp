@@ -126,18 +126,6 @@ namespace fvm
             return mesh;
         }
 
-        // Parse partition configuration
-        PartitionConfig parsePartition(const YAML::Node &node)
-        {
-            PartitionConfig partition;
-
-            partition.enabled = getWithDefault<bool>(node, "enabled", false);
-            partition.numParts = getWithDefault<int>(node, "numParts", 1);
-            partition.method = getWithDefault<std::string>(node, "method", "metis");
-
-            return partition;
-        }
-
         // Parse reorder configuration
         ReorderConfig parseReorder(const YAML::Node &node)
         {
@@ -147,6 +135,23 @@ namespace fvm
             reorder.nodeStrategy = getWithDefault<std::string>(node, "nodeStrategy", "");
 
             return reorder;
+        }
+
+        // Parse partition configuration
+        PartitionConfig parsePartition(const YAML::Node &node)
+        {
+            PartitionConfig partition;
+
+            partition.enabled = getWithDefault<bool>(node, "enabled", false);
+            partition.numParts = getWithDefault<int>(node, "numParts", 1);
+            partition.method = getWithDefault<std::string>(node, "method", "metis");
+
+            if (node["reorder"])
+            {
+                partition.reorder = parseReorder(node["reorder"]);
+            }
+
+            return partition;
         }
 
         // Parse output configuration

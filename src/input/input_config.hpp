@@ -99,6 +99,25 @@ namespace fvm
     };
 
     // =============================================================================
+    // Reorder Configuration
+    // =============================================================================
+
+    /**
+     * @brief Configuration for cell and node reordering.
+     *
+     * Used both at the global level (applied before partitioning) and
+     * within the partition config (applied per-partition after partitioning).
+     *
+     * Supported cell strategies: rcm, gps, sloan, spectral, spatial_x, spatial_y, random
+     * Supported node strategies: rcm, sequential, reverse, spatial_x, spatial_y, random
+     */
+    struct FVM_API ReorderConfig
+    {
+        std::string cellStrategy; ///< Cell reordering strategy (empty for no reordering)
+        std::string nodeStrategy; ///< Node reordering strategy (empty for no reordering)
+    };
+
+    // =============================================================================
     // Partition Configuration
     // =============================================================================
 
@@ -110,22 +129,7 @@ namespace fvm
         bool enabled = false;         ///< Whether to partition the mesh
         int numParts = 1;             ///< Number of partitions
         std::string method = "metis"; ///< Partitioning method: "metis" or "hierarchical"
-    };
-
-    // =============================================================================
-    // Reorder Configuration
-    // =============================================================================
-
-    /**
-     * @brief Configuration for cell and node reordering within partitions.
-     *
-     * Supported cell strategies: rcm, gps, sloan, spectral, spatial_x, spatial_y, random
-     * Supported node strategies: rcm, sequential, reverse, spatial_x, spatial_y, random
-     */
-    struct FVM_API ReorderConfig
-    {
-        std::string cellStrategy; ///< Cell reordering strategy (empty for no reordering)
-        std::string nodeStrategy; ///< Node reordering strategy (empty for no reordering)
+        ReorderConfig reorder;        ///< Per-partition reordering (applied after partitioning)
     };
 
     // =============================================================================

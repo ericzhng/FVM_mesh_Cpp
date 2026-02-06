@@ -138,7 +138,7 @@ namespace fvm
             }
         }
 
-        // Validate reorder strategies
+        // Validate reorder strategies (global)
         static const std::set<std::string> validCellStrategies = {
             "", "rcm", "gps", "sloan", "spectral", "spatial_x", "spatial_y", "random"};
         static const std::set<std::string> validNodeStrategies = {
@@ -152,6 +152,18 @@ namespace fvm
         if (validNodeStrategies.find(reorder.nodeStrategy) == validNodeStrategies.end())
         {
             errors << "- reorder.nodeStrategy '" << reorder.nodeStrategy << "' is not valid\n";
+            valid = false;
+        }
+
+        // Validate partition reorder strategies
+        if (validCellStrategies.find(partition.reorder.cellStrategy) == validCellStrategies.end())
+        {
+            errors << "- partition.reorder.cellStrategy '" << partition.reorder.cellStrategy << "' is not valid\n";
+            valid = false;
+        }
+        if (validNodeStrategies.find(partition.reorder.nodeStrategy) == validNodeStrategies.end())
+        {
+            errors << "- partition.reorder.nodeStrategy '" << partition.reorder.nodeStrategy << "' is not valid\n";
             valid = false;
         }
 

@@ -156,7 +156,7 @@ namespace fvm
         ofs << "</VTKFile>\n";
 
         ofs.close();
-        std::cout << "VTU file written: " << filename << std::endl;
+        // std::cout << "VTU file written: " << filename << std::endl;
     }
 
     void VTKWriter::writeOpenFOAM(const MeshInfo &mesh,
@@ -365,7 +365,7 @@ namespace fvm
             ofs << ")\n";
         }
 
-        std::cout << "OpenFOAM polyMesh written to: " << polyMeshDir << std::endl;
+        // std::cout << "OpenFOAM polyMesh written to: " << polyMeshDir << std::endl;
     }
 
     void VTKWriter::writeBoundaryInfo(const MeshInfo &mesh,
@@ -402,7 +402,7 @@ namespace fvm
         }
 
         ofs.close();
-        std::cout << "Boundary info written to: " << filename << std::endl;
+        // std::cout << "Boundary info written to: " << filename << std::endl;
     }
 
     void VTKWriter::writeVTKHeader(std::ostream &os, const std::string &title)

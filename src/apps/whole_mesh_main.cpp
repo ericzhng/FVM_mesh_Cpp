@@ -6,7 +6,8 @@
  * - Geometry creation (multiple shapes with union)
  * - Mesh generation
  * - Boundary identification via expressions
- * - Optional mesh partitioning with reordering
+ * - Optional global reordering of cells and nodes
+ * - Optional mesh partitioning with per-partition reordering
  * - Export to multiple formats
  */
 
@@ -18,6 +19,7 @@
 #include "meshgen/mesh_generator.hpp"
 #include "polymesh/poly_mesh.hpp"
 #include "polymesh/mesh_quality.hpp"
+#include "polymesh/reorder.hpp"
 #include "polymesh/mesh_partition_manager.hpp"
 #include "polymesh/local_mesh.hpp"
 #include "vtkio/vtk_writer.hpp"
@@ -42,6 +44,7 @@ namespace fs = std::filesystem;
 int createGeometryFromConfig(fvm::Geometry &geom, const fvm::GeometryConfig &config, double meshSize);
 void assignBoundariesToEdges(const std::vector<fvm::BoundaryConfig> &boundaries,
                              const std::vector<int> &surfaceTags, bool verbose);
+fvm::MeshInfo polyMeshToMeshInfo(const fvm::PolyMesh &mesh);
 fvm::MeshInfo localMeshToMeshInfo(const fvm::LocalMesh &localMesh);
 void writePartitionMetadata(const fvm::LocalMesh &localMesh, const std::string &fileName);
 void exportMesh(const fvm::MeshInfo &meshData, const fvm::OutputConfig &output, const std::string &basePath);
@@ -198,32 +201,64 @@ int main(int argc, char *argv[])
         std::cout << "   Mesh generated: " << mesher.getMeshData().elements.size() << " elements, "
                   << mesher.getMeshData().nodes.size() << " nodes\n";
 
-        // =================================================================
-        // 5. Export base mesh
-        // =================================================================
-        std::cout << "\n5. Exporting mesh...\n";
-        const fvm::MeshInfo &meshData = mesher.getMeshData();
         std::string basePath = config.output.directory + "/" + config.output.baseName;
-        exportMesh(meshData, config.output, basePath);
-
-        // =================================================================
-        // 6. Analyze mesh and write quality report
-        // =================================================================
         std::string fullMshPath = config.output.directory + "/" + mshFileName;
 
-        if (config.output.writeQualityReport || config.partition.enabled)
-        {
-            std::cout << "\n6. Analyzing mesh...\n";
+        // Determine if we need the PolyMesh analysis pipeline
+        bool hasGlobalReorder = !config.reorder.cellStrategy.empty() ||
+                                !config.reorder.nodeStrategy.empty();
+        bool needPolyMesh = hasGlobalReorder ||
+                            config.output.writeQualityReport ||
+                            config.partition.enabled;
 
+        if (needPolyMesh)
+        {
+            // =============================================================
+            // 5. Read mesh into PolyMesh and analyze
+            // =============================================================
+            std::cout << "\n5. Analyzing mesh...\n";
             fvm::PolyMesh globalMesh = fvm::PolyMesh::fromGmsh(fullMshPath);
             globalMesh.analyzeMesh();
+
+            // =============================================================
+            // 6. Reorder global mesh (if requested)
+            // =============================================================
+            if (hasGlobalReorder)
+            {
+                std::cout << "\n6. Reordering global mesh...\n";
+
+                if (!config.reorder.cellStrategy.empty())
+                {
+                    std::cout << "   Cell strategy: " << config.reorder.cellStrategy << "\n";
+                    fvm::renumberCells(globalMesh, config.reorder.cellStrategy);
+                }
+                if (!config.reorder.nodeStrategy.empty())
+                {
+                    std::cout << "   Node strategy: " << config.reorder.nodeStrategy << "\n";
+                    fvm::renumberNodes(globalMesh, config.reorder.nodeStrategy);
+                }
+
+                // Re-analyze after reordering
+                globalMesh.clearDerivedData();
+                globalMesh.analyzeMesh();
+                std::cout << "   Reordering complete.\n";
+            }
 
             if (verbose)
             {
                 globalMesh.printSummary();
             }
 
-            // Write markdown quality report
+            // =============================================================
+            // 7. Export mesh
+            // =============================================================
+            std::cout << "\n7. Exporting mesh...\n";
+            fvm::MeshInfo meshData = polyMeshToMeshInfo(globalMesh);
+            exportMesh(meshData, config.output, basePath);
+
+            // =============================================================
+            // 8. Write quality report (if requested)
+            // =============================================================
             if (config.output.writeQualityReport)
             {
                 auto quality = fvm::MeshQuality::fromMesh(globalMesh);
@@ -232,18 +267,21 @@ int main(int argc, char *argv[])
                 std::cout << "   Exported: " << qualityFile << "\n";
             }
 
-            // Partition mesh (if enabled)
+            // =============================================================
+            // 9. Partition mesh (if enabled)
+            // =============================================================
             if (config.partition.enabled)
             {
-                std::cout << "\n7. Partitioning mesh into " << config.partition.numParts << " parts...\n";
+                std::cout << "\n8. Partitioning mesh into " << config.partition.numParts << " parts...\n";
 
                 // Partition using MeshPartitionManager
+                // Per-partition reordering uses partition.reorder config
                 std::vector<fvm::LocalMesh> localMeshes = fvm::MeshPartitionManager::createLocalMeshes(
                     globalMesh,
                     config.partition.numParts,
                     config.partition.method,
-                    config.reorder.cellStrategy,
-                    config.reorder.nodeStrategy);
+                    config.partition.reorder.cellStrategy,
+                    config.partition.reorder.nodeStrategy);
 
                 std::cout << "   Partitioning complete.\n";
 
@@ -256,7 +294,7 @@ int main(int argc, char *argv[])
                 }
 
                 // Export partitioned meshes
-                std::cout << "\n8. Exporting partitioned meshes...\n";
+                std::cout << "\n9. Exporting partitioned meshes...\n";
                 for (const auto &localMesh : localMeshes)
                 {
                     std::string partitionBase = config.output.directory + "/partition_" + std::to_string(localMesh.rank);
@@ -276,6 +314,15 @@ int main(int argc, char *argv[])
                     std::cout << "   Partition " << localMesh.rank << " exported\n";
                 }
             }
+        }
+        else
+        {
+            // =============================================================
+            // 5. Export base mesh directly (no reorder/quality/partition)
+            // =============================================================
+            std::cout << "\n5. Exporting mesh...\n";
+            const fvm::MeshInfo &meshData = mesher.getMeshData();
+            exportMesh(meshData, config.output, basePath);
         }
 
         // Show GUI if requested
@@ -395,6 +442,44 @@ void assignBoundariesToEdges(const std::vector<fvm::BoundaryConfig> &boundaries,
 
     // Create a physical group for the surfaces
     gmsh::model::addPhysicalGroup(2, surfaceTags, -1, "domain");
+}
+
+fvm::MeshInfo polyMeshToMeshInfo(const fvm::PolyMesh &mesh)
+{
+    fvm::MeshInfo meshInfo;
+
+    // Nodes
+    meshInfo.nodes.resize(mesh.nNodes);
+    for (std::size_t i = 0; i < mesh.nNodes; ++i)
+    {
+        meshInfo.nodes[i] = mesh.nodeCoords[i];
+    }
+
+    // Elements
+    meshInfo.elements = mesh.cellNodeConnectivity;
+
+    // Element Types
+    meshInfo.elementTypes.assign(mesh.cellElementTypes.begin(), mesh.cellElementTypes.end());
+
+    // Boundary face sets: reconstruct from PolyMesh boundary data
+    // Build inverse map: tag -> name
+    std::unordered_map<fvm::Index, std::string> tagToName;
+    for (const auto &[name, tag] : mesh.boundaryPatchMap)
+    {
+        tagToName[tag] = name;
+    }
+
+    for (std::size_t i = 0; i < mesh.boundaryFaceNodes.size(); ++i)
+    {
+        fvm::Index tag = mesh.boundaryFaceTags[i];
+        auto it = tagToName.find(tag);
+        if (it != tagToName.end())
+        {
+            meshInfo.faceSets[it->second].push_back(mesh.boundaryFaceNodes[i]);
+        }
+    }
+
+    return meshInfo;
 }
 
 fvm::MeshInfo localMeshToMeshInfo(const fvm::LocalMesh &localMesh)
