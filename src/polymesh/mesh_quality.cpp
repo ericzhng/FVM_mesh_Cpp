@@ -3,13 +3,16 @@
 
 #include "mesh_quality.hpp"
 #include "poly_mesh.hpp"
+#include "vtkio/cell_types.hpp"
 
 #include <algorithm>
+#include <fstream>
 #include <iomanip>
 #include <iostream>
 #include <map>
 #include <numeric>
 #include <set>
+#include <sstream>
 #include <stdexcept>
 
 namespace fvm
@@ -109,6 +112,199 @@ namespace fvm
         {
             std::cout << "\n  Connectivity: OK (no issues found)\n";
         }
+    }
+
+    void MeshQuality::writeMarkdownReport(const std::string &filepath, const PolyMesh &mesh) const
+    {
+        std::ofstream ofs(filepath);
+        if (!ofs.is_open())
+        {
+            throw std::runtime_error("Failed to open file for writing: " + filepath);
+        }
+
+        // Helper: format a Real value with fixed precision
+        auto fmt = [](Real value, int precision = 4) -> std::string
+        {
+            std::ostringstream ss;
+            ss << std::fixed << std::setprecision(precision) << value;
+            return ss.str();
+        };
+
+        // Helper: format a Real value in scientific notation
+        auto fmtSci = [](Real value, int precision = 4) -> std::string
+        {
+            std::ostringstream ss;
+            ss << std::scientific << std::setprecision(precision) << value;
+            return ss.str();
+        };
+
+        // Helper: compute statistics for a vector of Reals
+        struct Stats
+        {
+            Real minVal, maxVal, avgVal;
+        };
+        auto computeStats = [](const std::vector<Real> &data) -> Stats
+        {
+            std::vector<Real> valid;
+            for (Real v : data)
+            {
+                if (std::isfinite(v))
+                    valid.push_back(v);
+            }
+            if (valid.empty())
+                return {0.0, 0.0, 0.0};
+
+            Real mn = *std::min_element(valid.begin(), valid.end());
+            Real mx = *std::max_element(valid.begin(), valid.end());
+            Real avg = std::accumulate(valid.begin(), valid.end(), 0.0) /
+                       static_cast<Real>(valid.size());
+            return {mn, mx, avg};
+        };
+
+        // Title
+        ofs << "# Mesh Quality Report\n\n";
+
+        // General Information
+        ofs << "## General Information\n\n";
+        ofs << "| Property | Value |\n";
+        ofs << "|----------|-------|\n";
+        ofs << "| Dimension | " << mesh.dimension << "D |\n";
+        ofs << "| Nodes | " << mesh.nNodes << " |\n";
+        ofs << "| Cells | " << mesh.nCells << " |\n";
+        ofs << "\n";
+
+        // Geometric Bounding Box
+        if (mesh.nNodes > 0)
+        {
+            Real minX = mesh.nodeCoords[0][0], maxX = mesh.nodeCoords[0][0];
+            Real minY = mesh.nodeCoords[0][1], maxY = mesh.nodeCoords[0][1];
+            Real minZ = mesh.nodeCoords[0][2], maxZ = mesh.nodeCoords[0][2];
+
+            for (const auto &coord : mesh.nodeCoords)
+            {
+                minX = std::min(minX, coord[0]);
+                maxX = std::max(maxX, coord[0]);
+                minY = std::min(minY, coord[1]);
+                maxY = std::max(maxY, coord[1]);
+                minZ = std::min(minZ, coord[2]);
+                maxZ = std::max(maxZ, coord[2]);
+            }
+
+            ofs << "## Geometric Bounding Box\n\n";
+            ofs << "| Axis | Min | Max |\n";
+            ofs << "|------|-----|-----|\n";
+            ofs << "| X | " << fmt(minX) << " | " << fmt(maxX) << " |\n";
+            ofs << "| Y | " << fmt(minY) << " | " << fmt(maxY) << " |\n";
+            if (mesh.dimension == 3)
+            {
+                ofs << "| Z | " << fmt(minZ) << " | " << fmt(maxZ) << " |\n";
+            }
+            ofs << "\n";
+        }
+
+        // Cell Type Distribution
+        if (!mesh.cellElementTypes.empty())
+        {
+            std::map<Index, Index> typeCounts;
+            for (auto type : mesh.cellElementTypes)
+            {
+                typeCounts[type]++;
+            }
+
+            ofs << "## Cell Type Distribution\n\n";
+            ofs << "| Type | Count |\n";
+            ofs << "|------|-------|\n";
+            for (const auto &[typeId, count] : typeCounts)
+            {
+                std::string typeName = getVTKCellTypeName(typeId);
+                ofs << "| " << typeName << " | " << count << " |\n";
+            }
+            ofs << "\n";
+        }
+
+        // Cell Geometry Statistics
+        if (!mesh.cellVolumes.empty())
+        {
+            ofs << "## Cell Geometry\n\n";
+            ofs << "| Metric | Min | Max | Average |\n";
+            ofs << "|--------|-----|-----|--------|\n";
+
+            // Cell volumes
+            {
+                std::vector<Real> valid;
+                for (Real v : mesh.cellVolumes)
+                {
+                    if (v > 0)
+                        valid.push_back(v);
+                }
+                if (!valid.empty())
+                {
+                    auto s = computeStats(valid);
+                    ofs << "| Cell Volume | " << fmtSci(s.minVal)
+                        << " | " << fmtSci(s.maxVal)
+                        << " | " << fmtSci(s.avgVal) << " |\n";
+                }
+            }
+
+            // Face-to-centroid distances
+            {
+                std::vector<Real> allDist;
+                for (const auto &dists : mesh.faceToCentroidDistances)
+                {
+                    for (Real d : dists)
+                    {
+                        if (d > 0)
+                            allDist.push_back(d);
+                    }
+                }
+                if (!allDist.empty())
+                {
+                    auto s = computeStats(allDist);
+                    ofs << "| Face-to-Centroid Dist | " << fmtSci(s.minVal)
+                        << " | " << fmtSci(s.maxVal)
+                        << " | " << fmtSci(s.avgVal) << " |\n";
+                }
+            }
+            ofs << "\n";
+        }
+
+        // Quality Metrics
+        ofs << "## Quality Metrics\n\n";
+        ofs << "| Metric | Min | Max | Average |\n";
+        ofs << "|--------|-----|-----|--------|\n";
+        ofs << "| Min/Max Volume Ratio | " << fmt(minMaxVolumeRatio) << " | | |\n";
+
+        auto writeMetricRow = [&](const std::string &name, const std::vector<Real> &data)
+        {
+            if (data.empty())
+                return;
+            auto s = computeStats(data);
+            ofs << "| " << name << " | " << fmt(s.minVal)
+                << " | " << fmt(s.maxVal)
+                << " | " << fmt(s.avgVal) << " |\n";
+        };
+
+        writeMetricRow("Skewness", cellSkewness);
+        writeMetricRow("Aspect Ratio", cellAspectRatio);
+        writeMetricRow("Non-Orthogonality (deg)", cellNonOrthogonality);
+        ofs << "\n";
+
+        // Connectivity
+        ofs << "## Connectivity\n\n";
+        if (connectivityIssues.empty())
+        {
+            ofs << "OK - no issues found.\n";
+        }
+        else
+        {
+            for (const auto &issue : connectivityIssues)
+            {
+                ofs << "- " << issue << "\n";
+            }
+        }
+        ofs << "\n";
+
+        ofs.close();
     }
 
     // =========================================================================

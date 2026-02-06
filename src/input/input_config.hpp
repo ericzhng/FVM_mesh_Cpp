@@ -142,6 +142,7 @@ namespace fvm
         std::vector<std::string> formats = {"vtu"}; ///< Export formats: vtu, vtk, msh, openfoam
         bool writeBoundaryInfo = true;              ///< Write boundary information file
         bool writePartitionMetadata = true;         ///< Write partition metadata (JSON)
+        bool writeQualityReport = true;             ///< Write mesh quality report (Markdown)
     };
 
     // =============================================================================

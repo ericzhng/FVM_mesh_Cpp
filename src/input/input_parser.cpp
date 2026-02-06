@@ -168,6 +168,7 @@ namespace fvm
 
             output.writeBoundaryInfo = getWithDefault<bool>(node, "writeBoundaryInfo", true);
             output.writePartitionMetadata = getWithDefault<bool>(node, "writePartitionMetadata", true);
+            output.writeQualityReport = getWithDefault<bool>(node, "writeQualityReport", true);
 
             return output;
         }

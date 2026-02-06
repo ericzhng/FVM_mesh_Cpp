@@ -17,6 +17,7 @@
 #include "meshgen/geometry.hpp"
 #include "meshgen/mesh_generator.hpp"
 #include "polymesh/poly_mesh.hpp"
+#include "polymesh/mesh_quality.hpp"
 #include "polymesh/mesh_partition_manager.hpp"
 #include "polymesh/local_mesh.hpp"
 #include "vtkio/vtk_writer.hpp"
@@ -206,14 +207,14 @@ int main(int argc, char *argv[])
         exportMesh(meshData, config.output, basePath);
 
         // =================================================================
-        // 6. Partition mesh (if enabled)
+        // 6. Analyze mesh and write quality report
         // =================================================================
-        if (config.partition.enabled)
-        {
-            std::cout << "\n6. Partitioning mesh into " << config.partition.numParts << " parts...\n";
+        std::string fullMshPath = config.output.directory + "/" + mshFileName;
 
-            // Read mesh into PolyMesh
-            std::string fullMshPath = config.output.directory + "/" + mshFileName;
+        if (config.output.writeQualityReport || config.partition.enabled)
+        {
+            std::cout << "\n6. Analyzing mesh...\n";
+
             fvm::PolyMesh globalMesh = fvm::PolyMesh::fromGmsh(fullMshPath);
             globalMesh.analyzeMesh();
 
@@ -222,43 +223,58 @@ int main(int argc, char *argv[])
                 globalMesh.printSummary();
             }
 
-            // Partition using MeshPartitionManager
-            std::vector<fvm::LocalMesh> localMeshes = fvm::MeshPartitionManager::createLocalMeshes(
-                globalMesh,
-                config.partition.numParts,
-                config.partition.method,
-                config.reorder.cellStrategy,
-                config.reorder.nodeStrategy);
-
-            std::cout << "   Partitioning complete.\n";
-
-            // Analyze partitions
-            for (const auto &localMesh : localMeshes)
+            // Write markdown quality report
+            if (config.output.writeQualityReport)
             {
-                std::cout << "   Partition " << localMesh.rank << ": "
-                          << localMesh.numOwnedCells << " owned, "
-                          << localMesh.numHaloCells << " halo cells\n";
+                auto quality = fvm::MeshQuality::fromMesh(globalMesh);
+                std::string qualityFile = basePath + "_quality.md";
+                quality.writeMarkdownReport(qualityFile, globalMesh);
+                std::cout << "   Exported: " << qualityFile << "\n";
             }
 
-            // Export partitioned meshes
-            std::cout << "\n7. Exporting partitioned meshes...\n";
-            for (const auto &localMesh : localMeshes)
+            // Partition mesh (if enabled)
+            if (config.partition.enabled)
             {
-                std::string partitionBase = config.output.directory + "/partition_" + std::to_string(localMesh.rank);
+                std::cout << "\n7. Partitioning mesh into " << config.partition.numParts << " parts...\n";
 
-                // Write VTU file for visualization
-                std::string vtuFile = partitionBase + ".vtu";
-                fvm::MeshInfo partMeshInfo = localMeshToMeshInfo(localMesh);
-                fvm::VTKWriter::writeVTU(partMeshInfo, vtuFile);
+                // Partition using MeshPartitionManager
+                std::vector<fvm::LocalMesh> localMeshes = fvm::MeshPartitionManager::createLocalMeshes(
+                    globalMesh,
+                    config.partition.numParts,
+                    config.partition.method,
+                    config.reorder.cellStrategy,
+                    config.reorder.nodeStrategy);
 
-                // Write JSON metadata for parallel communication
-                if (config.output.writePartitionMetadata)
+                std::cout << "   Partitioning complete.\n";
+
+                // Analyze partitions
+                for (const auto &localMesh : localMeshes)
                 {
-                    std::string jsonFile = partitionBase + ".json";
-                    writePartitionMetadata(localMesh, jsonFile);
+                    std::cout << "   Partition " << localMesh.rank << ": "
+                              << localMesh.numOwnedCells << " owned, "
+                              << localMesh.numHaloCells << " halo cells\n";
                 }
 
-                std::cout << "   Partition " << localMesh.rank << " exported\n";
+                // Export partitioned meshes
+                std::cout << "\n8. Exporting partitioned meshes...\n";
+                for (const auto &localMesh : localMeshes)
+                {
+                    std::string partitionBase = config.output.directory + "/partition_" + std::to_string(localMesh.rank);
+
+                    // Write VTU file for visualization
+                    std::string vtuFile = partitionBase + ".vtu";
+                    fvm::MeshInfo partMeshInfo = localMeshToMeshInfo(localMesh);
+                    fvm::VTKWriter::writeVTU(partMeshInfo, vtuFile);
+
+                    // Write JSON metadata for parallel communication
+                    if (config.output.writePartitionMetadata)
+                    {
+                        std::string jsonFile = partitionBase + ".json";
+                        writePartitionMetadata(localMesh, jsonFile);
+                    }
+
+                    std::cout << "   Partition " << localMesh.rank << " exported\n";
+                }
             }
         }
 

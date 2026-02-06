@@ -74,6 +74,13 @@ namespace fvm
          */
         void printSummary() const;
 
+        /**
+         * @brief Writes a Markdown-formatted quality report to a file.
+         * @param filepath Output file path (e.g., "output/mesh_quality.md")
+         * @param mesh The analyzed PolyMesh object (for general mesh info)
+         */
+        void writeMarkdownReport(const std::string &filepath, const PolyMesh &mesh) const;
+
     private:
         // =========================================================================
         // Internal Computation Methods
