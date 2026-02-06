@@ -378,22 +378,15 @@ namespace fvm
         }
 
         ofs << "# Boundary Information\n";
-        ofs << "# Format: boundary_name num_faces\n\n";
+        ofs << "# Format: boundary_name num_faces\n";
+        ofs << "#   node_indices...\n\n";
 
         for (const auto &[name, faces] : mesh.faceSets)
         {
             ofs << name << " " << faces.size() << "\n";
-        }
-
-        ofs << "\n# Face Sets\n";
-        ofs << "# Format: set_name face_index node_indices...\n\n";
-
-        for (const auto &[name, faces] : mesh.faceSets)
-        {
-            for (auto i = 0; i < faces.size(); ++i)
+            for (const auto &face : faces)
             {
-                ofs << name << " " << i;
-                for (auto nodeIdx : faces[i])
+                for (auto nodeIdx : face)
                 {
                     ofs << " " << nodeIdx;
                 }

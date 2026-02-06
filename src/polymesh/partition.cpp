@@ -352,21 +352,21 @@ namespace fvm
         for (auto p = 0; p < nParts; ++p)
         {
             Real pct = 100.0 * counts[p] / totalCells;
-            std::cout << "  Partition " << std::setw(3) << p << ": "
+            std::cout << "   Partition " << std::setw(3) << p << ": "
                       << std::setw(8) << counts[p] << " cells ("
                       << std::fixed << std::setprecision(1) << pct << "%)\n";
         }
 
         std::cout << "\nBalance Statistics:\n";
-        std::cout << "  Min cells per partition: " << minCells << "\n";
-        std::cout << "  Max cells per partition: " << maxCells << "\n";
-        std::cout << "  Avg cells per partition: " << std::fixed
+        std::cout << "   Min cells per partition: " << minCells << "\n";
+        std::cout << "   Max cells per partition: " << maxCells << "\n";
+        std::cout << "   Avg cells per partition: " << std::fixed
                   << std::setprecision(1) << avgCells << "\n";
 
         Real imbalance = (maxCells > 0)
                              ? (static_cast<Real>(maxCells) / avgCells - 1.0) * 100.0
                              : 0.0;
-        std::cout << "  Load imbalance: " << std::fixed << std::setprecision(1)
+        std::cout << "   Load imbalance: " << std::fixed << std::setprecision(1)
                   << imbalance << "%\n";
     }
 

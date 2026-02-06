@@ -10,7 +10,7 @@
             "request": "launch",
             "program": "${workspaceFolder}/build/debug-shared/src/apps/Debug/whole_mesh_main.exe",
             "args": [
-                "${workspaceFolder}/examples/multi_geometry.yaml", "-v"
+                "${workspaceFolder}/examples/rectangle.yaml", "-v"
             ],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",

@@ -56,8 +56,8 @@ namespace fvm
         extractMeshData();
 
         std::cout << "Mesh generation complete." << std::endl;
-        std::cout << "  Nodes: " << meshData_.nodes.size() << std::endl;
-        std::cout << "  Elements: " << meshData_.elements.size() << std::endl;
+        std::cout << "   Nodes: " << meshData_.nodes.size() << std::endl;
+        std::cout << "   Elements: " << meshData_.elements.size() << std::endl;
     }
 
     void MeshGenerator::applyMeshParameters(int surfaceTag, const MeshParams &params)
