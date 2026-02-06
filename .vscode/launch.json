@@ -10,7 +10,7 @@
             "request": "launch",
             "program": "${workspaceFolder}/build/debug-shared/src/apps/Debug/whole_mesh_main.exe",
             "args": [
-                "${workspaceFolder}/examples/circle.yaml", "--gui", "-v"
+                "${workspaceFolder}/examples/multi_geometry.yaml", "-v"
             ],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
@@ -24,7 +24,7 @@
             "program": "${workspaceFolder}/build/debug-shared/src/apps/Debug/fvm_meshgen.exe",
             "args": [
                 "--output",
-                "${workspaceFolder}/data"
+                "${workspaceFolder}/data", "--gui", "-v"
             ],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
