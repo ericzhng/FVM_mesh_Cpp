@@ -10,7 +10,7 @@
             "request": "launch",
             "program": "${workspaceFolder}/build/debug-shared/src/apps/Debug/whole_mesh_main.exe",
             "args": [
-                "${workspaceFolder}/examples/rectangle.yaml", "-v"
+                "${workspaceFolder}/examples/euler_test.yaml", "--gui", "-v"
             ],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
