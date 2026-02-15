@@ -1,13 +1,38 @@
 cmake_minimum_required(VERSION 3.16)
 project(FVM_mesh VERSION 1.0.0 LANGUAGES CXX)
 
+# =============================================================================
+# C++ Standard
+# =============================================================================
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
+# =============================================================================
+# CMake Module and Prefix Path
+# =============================================================================
 # Add custom CMake modules path
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
+list(APPEND CMAKE_PREFIX_PATH "${CMAKE_SOURCE_DIR}/extern")
 
+# =============================================================================
+# Build Type
+# =============================================================================
+if(NOT CMAKE_BUILD_TYPE)
+    set(CMAKE_BUILD_TYPE Release CACHE STRING "Build type" FORCE)
+endif()
+message(STATUS "Build type: ${CMAKE_BUILD_TYPE}")
+
+# =============================================================================
+# Output Directories
+# =============================================================================
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
+
+# =============================================================================
+# Package Options
+# =============================================================================
 # Option to enable METIS support
 option(USE_METIS "Enable METIS library for graph partitioning" ON)
 
